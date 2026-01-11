@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: portfoliio-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-portfoliio_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-portfoliio_password}
+      POSTGRES_DB: ${DB_NAME:-portfoliio_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - portfoliio-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfoliio_user -d portfoliio_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: portfoliio-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-portfoliio_user}
+      DB_PASSWORD: ${DB_PASSWORD:-portfoliio_password}
+      DB_NAME: ${DB_NAME:-portfoliio_db}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
+      GMAIL_REDIRECT_URI: ${GMAIL_REDIRECT_URI:-http://localhost:3000/api/gmail/callback}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/app/server
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - portfoliio-network
+    command: npm run server:dev
+
+  # Frontend Development Server
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: portfoliio-frontend
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./vite.config.js:/app/vite.config.js
+      - /app/node_modules
+    networks:
+      - portfoliio-network
+    command: npm run dev -- --host 0.0.0.0
+
+networks:
+  portfoliio-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
