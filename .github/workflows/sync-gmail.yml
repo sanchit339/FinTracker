@@ -1,0 +1,24 @@
+name: Gmail Sync Every 6 Hours
+
+on:
+  schedule:
+    # Runs every 6 hours (0:00, 6:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  
+  # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  sync-gmail:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger Vercel Gmail Sync Endpoint
+        run: |
+          curl -X POST ${{ secrets.VERCEL_URL }}/api/cron/sync-gmail \
+               -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+               -H "Content-Type: application/json"
+        
+      - name: Check Response
+        if: failure()
+        run: echo "Gmail sync failed - check Vercel logs"
