@@ -117,7 +117,7 @@ function Settings() {
     const syncGmail = async () => {
         try {
             setLoading(true);
-            setMessage('🔄 Syncing Gmail transactions...');
+            setMessage('🔄 Syncing new Gmail transactions...');
             const token = localStorage.getItem('token');
             const response = await fetch('/api/gmail/sync', {
                 method: 'POST',
@@ -126,13 +126,40 @@ function Settings() {
 
             if (response.ok) {
                 const result = await response.json();
-                setMessage(`✅ Synced ${result.transactionsAdded} transactions successfully!`);
+                setMessage(`✅ Synced ${result.transactionsAdded} new transactions!`);
             } else {
                 const error = await response.json();
                 throw new Error(error.details || 'Failed to sync');
             }
         } catch (error) {
             console.error('Error syncing:', error);
+            setMessage(`❌ ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const syncAll = async () => {
+        if (!confirm('This will re-sync all emails from the start of this month. Continue?')) return;
+
+        try {
+            setLoading(true);
+            setMessage('🔄 Syncing ALL transactions from this month...');
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/gmail/sync-all', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setMessage(`✅ Synced ${result.transactionsAdded} transactions from entire month!`);
+            } else {
+                const error = await response.json();
+                throw new Error(error.details || 'Failed to sync all');
+            }
+        } catch (error) {
+            console.error('Error syncing all:', error);
             setMessage(`❌ ${error.message}`);
         } finally {
             setLoading(false);
