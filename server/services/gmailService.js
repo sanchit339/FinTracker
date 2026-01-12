@@ -211,9 +211,9 @@ class GmailService {
                         body = Buffer.from(part.body.data, 'base64url').toString('utf-8');
                         break;
                     } else if (part.mimeType === 'text/html' && part.body?.data && !body) {
-                        // Use HTML as fallback, strip tags
+                        // Use HTML as fallback, strip tags properly
                         const htmlBody = Buffer.from(part.body.data, 'base64url').toString('utf-8');
-                        body = htmlBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                        body = this.extractTextFromHTML(htmlBody);
                     } else if (part.parts) {
                         // Nested parts (like multipart/alternative)
                         for (const nestedPart of part.parts) {
@@ -222,7 +222,7 @@ class GmailService {
                                 break;
                             } else if (nestedPart.mimeType === 'text/html' && nestedPart.body?.data && !body) {
                                 const htmlBody = Buffer.from(nestedPart.body.data, 'base64url').toString('utf-8');
-                                body = htmlBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                                body = this.extractTextFromHTML(htmlBody);
                             }
                         }
                         if (body) break;
@@ -244,6 +244,36 @@ class GmailService {
             console.error('Error extracting email data:', error);
             return null;
         }
+    }
+
+    // Helper to extract text from HTML emails
+    extractTextFromHTML(html) {
+        let text = html;
+
+        // Remove style blocks
+        text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+        // Remove script blocks
+        text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+        // Remove HTML comments
+        text = text.replace(/<!--[\s\S]*?-->/g, '');
+
+        // Remove all remaining HTML tags
+        text = text.replace(/<[^>]+>/g, ' ');
+
+        // Decode HTML entities
+        text = text.replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'");
+
+        // Clean up whitespace
+        text = text.replace(/\s+/g, ' ').trim();
+
+        return text;
     }
 }
 
