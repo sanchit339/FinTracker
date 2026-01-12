@@ -112,9 +112,10 @@ class SyncService {
                 if (!emailData) continue;
 
                 const transaction = emailParser.parseEmail(emailData);
-                if (!transaction) {
-                    // Log parsing error
-                    await this.logParsingError(userId, emailData, 'Failed to parse transaction');
+                if (!transaction || transaction.error) {
+                    // Log parsing error with details
+                    const errorMsg = transaction?.errorMessage || 'Failed to parse transaction';
+                    await this.logParsingError(userId, emailData, errorMsg);
                     continue;
                 }
 

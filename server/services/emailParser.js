@@ -84,15 +84,31 @@ class EmailParser {
 
             // Check if we have minimum required fields
             if (!transaction.amount || !transaction.type) {
-                console.log('✗ PARSING FAILED - Missing required fields (amount or type)');
-                return null;
+                const missingFields = [];
+                if (!transaction.amount) missingFields.push('amount');
+                if (!transaction.type) missingFields.push('type');
+                const errorMsg = `Missing required fields: ${missingFields.join(', ')}. Body preview: ${body.substring(0, 200)}`;
+                console.log('✗ PARSING FAILED -', errorMsg);
+
+                // Return error details instead of null for better debugging
+                return {
+                    error: true,
+                    errorMessage: errorMsg,
+                    subject,
+                    bodyPreview: body.substring(0, 500)
+                };
             }
 
             console.log('✓ PARSING SUCCESS');
             return transaction;
         } catch (error) {
             console.error('Error parsing HDFC email:', error);
-            return null;
+            return {
+                error: true,
+                errorMessage: `Exception: ${error.message}`,
+                subject: emailData.subject,
+                bodyPreview: emailData.body?.substring(0, 500) || ''
+            };
         }
     }
 
