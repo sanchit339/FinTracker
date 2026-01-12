@@ -126,7 +126,10 @@ function Settings() {
 
             if (response.ok) {
                 const result = await response.json();
-                setMessage(`✅ Synced ${result.transactionsAdded} new transactions!`);
+                const msg = result.emailsFound > 0
+                    ? `✅ Found ${result.emailsFound} emails, added ${result.transactionsAdded} new transactions!`
+                    : '✅ No new emails found';
+                setMessage(msg);
             } else {
                 const error = await response.json();
                 throw new Error(error.details || 'Failed to sync');
@@ -153,7 +156,10 @@ function Settings() {
 
             if (response.ok) {
                 const result = await response.json();
-                setMessage(`✅ Synced ${result.transactionsAdded} transactions from entire month!`);
+                const msg = result.emailsFound > 0
+                    ? `✅ Found ${result.emailsFound} emails this month, added ${result.transactionsAdded} new transactions!`
+                    : '✅ No emails found this month';
+                setMessage(msg);
             } else {
                 const error = await response.json();
                 throw new Error(error.details || 'Failed to sync all');

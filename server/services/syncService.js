@@ -67,6 +67,7 @@ class SyncService {
 
             return {
                 success: true,
+                emailsFound: emails.length,
                 emailsProcessed: emails.length,
                 transactionsAdded: results.transactionsAdded,
                 accountsCreated: results.accountsCreated,
