@@ -35,9 +35,9 @@ class SyncService {
                 searchAfterDate = new Date(lastSync);
                 console.log(`📥 Incremental sync - fetching emails since: ${searchAfterDate.toISOString()}`);
             } else {
-                // First sync: Fetch all emails from current month
+                // First sync: Fetch all emails from last 3 months to ensure we get everything
                 const now = new Date();
-                searchAfterDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                searchAfterDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
                 isFirstSync = true;
                 console.log(`🆕 First sync - fetching all emails from: ${searchAfterDate.toISOString()}`);
             }
