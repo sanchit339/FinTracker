@@ -48,11 +48,13 @@ class GmailService {
         try {
             const gmail = this.getGmailClient();
 
-            // Format date for Gmail search: YYYY/MM/DD
-            const dateStr = sinceDate.toISOString().split('T')[0].replace(/-/g, '/');
+            // Calculate days ago from now (Gmail newer_than works better than after)
+            const now = new Date();
+            const daysAgo = Math.ceil((now - sinceDate) / (1000 * 60 * 60 * 24));
 
-            // Build query: from HDFC alerts after the specified date
-            const query = `from:(alerts@hdfcbank.net) after:${dateStr}`;
+            // Build query: from HDFC alerts newer than X days
+            // Using newer_than instead of after to avoid date boundary issues
+            const query = `from:(alerts@hdfcbank.net) newer_than:${daysAgo}d`;
             console.log('Gmail search query:', query);
 
             // List messages
@@ -63,7 +65,7 @@ class GmailService {
             });
 
             const messages = response.data.messages || [];
-            console.log(`Found ${messages.length} HDFC emails since ${dateStr}`);
+            console.log(`Found ${messages.length} HDFC emails from last ${daysAgo} days`);
 
             if (messages.length === 0) {
                 return [];
