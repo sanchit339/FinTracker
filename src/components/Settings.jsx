@@ -270,7 +270,10 @@ function Settings() {
                         </div>
                         <div className="button-group mt-3" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                             <button className="btn btn-primary" onClick={syncGmail} disabled={loading}>
-                                {loading ? 'Syncing...' : '🔄 Sync Transactions'}
+                                {loading ? 'Syncing...' : '🔄 Sync New'}
+                            </button>
+                            <button className="btn btn-primary" onClick={syncAll} disabled={loading} style={{ backgroundColor: '#10B981' }}>
+                                {loading ? 'Syncing...' : '📅 Sync All Month'}
                             </button>
                             <button className="btn btn-secondary" onClick={disconnectGmail}>
                                 Disconnect Gmail
