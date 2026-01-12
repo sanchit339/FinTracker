@@ -176,6 +176,25 @@ router.post('/sync', authenticateToken, async (req, res) => {
     }
 });
 
+// Sync ALL emails from start of month (ignores last_gmail_sync)
+router.post('/sync-all', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        // Temporarily clear last_gmail_sync to force full month sync
+        await pool.query('UPDATE users SET last_gmail_sync = NULL WHERE id = $1', [userId]);
+
+        const results = await syncService.syncGmailForUser(userId);
+        res.json(results);
+    } catch (error) {
+        console.error('Sync-all endpoint error:', error);
+        res.status(500).json({
+            error: 'Failed to sync all emails',
+            details: error.message
+        });
+    }
+});
+
 // Get sync status
 router.get('/sync/status', authenticateToken, async (req, res) => {
     try {
