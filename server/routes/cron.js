@@ -18,10 +18,10 @@ router.post('/sync-gmail', async (req, res) => {
 
         console.log('Starting automated Gmail sync for all users...');
 
-        // Get all users with Gmail connected
+        // Get all users with Gmail connected  
         const pool = (await import('../config/database.js')).default;
         const usersResult = await pool.query(
-            'SELECT DISTINCT user_id FROM gmail_tokens WHERE is_valid = true'
+            'SELECT id, username, gmail_email FROM users WHERE gmail_refresh_token IS NOT NULL'
         );
 
         const users = usersResult.rows;
@@ -35,14 +35,15 @@ router.post('/sync-gmail', async (req, res) => {
         // Sync emails for each user
         for (const user of users) {
             try {
-                console.log(`Syncing emails for user ${user.user_id}...`);
-                await syncService.syncUserEmails(user.user_id);
+                console.log(`Syncing emails for user ${user.id} (${user.username})...`);
+                await syncService.syncGmailForUser(user.id);
                 results.successful++;
             } catch (error) {
-                console.error(`Failed to sync for user ${user.user_id}:`, error.message);
+                console.error(`Failed to sync for user ${user.id}:`, error.message);
                 results.failed++;
                 results.errors.push({
-                    userId: user.user_id,
+                    userId: user.id,
+                    username: user.username,
                     error: error.message
                 });
             }
