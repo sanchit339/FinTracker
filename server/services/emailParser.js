@@ -213,7 +213,8 @@ class EmailParser {
         if (desc.includes('uber') || desc.includes('ola') ||
             desc.includes('rapido') || desc.includes('petrol') ||
             desc.includes('fuel') || desc.includes('metro') ||
-            desc.includes('bus') || desc.includes('taxi')) {
+            desc.includes('bus') || desc.includes('taxi') ||
+            desc.includes('chalo')) {
             return 'Transportation';
         }
 
