@@ -17,8 +17,8 @@ class EmailParser {
                 type: /(debited|credited|added|withdrawn|deducted)/i,
                 // Match: account followed by masked number or name
                 account: /account\s+(?:ending\s+)?([A-Z0-9*X]+)/i,
-                // Match: "to VPA xxx@yyy MERCHANT NAME" or "to Account xxx MERCHANT" - capture everything after VPA/Account until "on"
-                recipient: /to\s+(?:VPA\s+)?([^\s]+@[^\s]+(?:\s+[A-Z][^o]*?)?|Account\s+[^\s]+(?:\s+[A-Z][^o]*?)?)/i,
+                // Match: everything after "to VPA" or "to Account" until " on " (use lookahead)
+                recipient: /to\s+(?:VPA\s+)?(.+?)(?=\s+on\s+\d)/i,
                 // Match: Avl Bal or Available balance
                 balance: /(?:Avl\s+Bal|Available\s+balance)[:\s]*Rs\.?\s*(?:INR\s*)?([,\d]+\.?\d*)/i
             };
