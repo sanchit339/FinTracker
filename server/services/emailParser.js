@@ -11,16 +11,16 @@ class EmailParser {
             console.log('Email received at:', receivedAt);
 
             const patterns = {
-                // Match: Rs. 123.00 or Rs. 1,234.56
-                amount: /Rs\.\s*([\d,]+\.?\d*)/i,
-                // Match: debited or credited
-                type: /(debited|credited)/i,
+                // Match: Rs. 123.00 or Rs.INR 1,234.56 or Rs 123
+                amount: /Rs\.?\s*(?:INR\s*)?([,\d]+\.?\d*)/i,
+                // Match: debited, credited, added, withdrawn, deducted
+                type: /(debited|credited|added|withdrawn|deducted)/i,
                 // Match: account followed by masked number or name
-                account: /account\s+([A-Z0-9*]+)/i,
-                // Match: to VPA xxx or to Account xxx or just "to xxx"
-                recipient: /to\s+(?:VPA\s+)?([^\s]+(?:@[^\s]+)?|[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+                account: /account\s+(?:ending\s+)?([A-Z0-9*X]+)/i,
+                // Match: to VPA xxx or to Account xxx or just "to xxx" or "from xxx"
+                recipient: /(?:to|from)\s+(?:VPA\s+)?([^\s]+(?:@[^\s]+)?|[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
                 // Match: Avl Bal or Available balance
-                balance: /(?:Avl\s+Bal|Available\s+balance)[:\s]*Rs\.?\s*([\d,]+\.?\d*)/i
+                balance: /(?:Avl\s+Bal|Available\s+balance)[:\s]*Rs\.?\s*(?:INR\s*)?([,\d]+\.?\d*)/i
             };
 
             const transaction = {
@@ -47,7 +47,13 @@ class EmailParser {
             // Extract type
             const typeMatch = body.match(patterns.type) || subject.match(patterns.type);
             if (typeMatch) {
-                transaction.type = typeMatch[1].toLowerCase() === 'debited' ? 'DEBIT' : 'CREDIT';
+                const typeWord = typeMatch[1].toLowerCase();
+                // Map variations to DEBIT/CREDIT
+                if (typeWord === 'debited' || typeWord === 'withdrawn' || typeWord === 'deducted') {
+                    transaction.type = 'DEBIT';
+                } else if (typeWord === 'credited' || typeWord === 'added') {
+                    transaction.type = 'CREDIT';
+                }
                 console.log('✓ Type:', transaction.type);
             } else {
                 console.log('✗ Type not found');
