@@ -55,8 +55,9 @@ class GmailService {
             const dateStr = adjustedDate.toISOString().split('T')[0].replace(/-/g, '/');
 
             // Build query: from HDFC alerts after the specified date
+            // ONLY fetch UPI transaction emails (not OTPs, statements, etc.)
             // 'after:' excludes the specified date, so we subtract 1 day above to include our target date
-            const query = `from:(alerts@hdfcbank.net) after:${dateStr}`;
+            const query = `from:(alerts@hdfcbank.net) subject:"UPI txn" after:${dateStr}`;
             console.log('Gmail search query:', query);
 
             // List messages
@@ -67,7 +68,7 @@ class GmailService {
             });
 
             const messages = response.data.messages || [];
-            console.log(`Found ${messages.length} HDFC emails since ${dateStr}`);
+            console.log(`Found ${messages.length} HDFC UPI transaction emails since ${dateStr}`);
 
             if (messages.length === 0) {
                 return [];
