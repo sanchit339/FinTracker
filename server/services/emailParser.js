@@ -86,7 +86,34 @@ class EmailParser {
                 console.log('✓ Balance:', transaction.balance);
             }
 
-            console.log('✓ Transaction Date (from email arrival):', transaction.date);
+            // Extract transaction date from email body (format: on DD-MM-YY)
+            const datePatterns = [
+                /on\s+(\d{2})-(\d{2})-(\d{2})/i,  // on 04-01-26
+                /dated?\s+(\d{2})-(\d{2})-(\d{2})/i  // dated 04-01-26
+            ];
+
+            let transactionDate = null;
+            for (const pattern of datePatterns) {
+                const dateMatch = body.match(pattern);
+                if (dateMatch) {
+                    const day = parseInt(dateMatch[1]);
+                    const month = parseInt(dateMatch[2]) - 1; // JS months are 0-indexed
+                    let year = parseInt(dateMatch[3]);
+
+                    // Convert 2-digit year to 4-digit (26 → 2026)
+                    year = year < 50 ? 2000 + year : 1900 + year;
+
+                    transactionDate = new Date(year, month, day);
+                    console.log('✓ Transaction Date (from email body):', transactionDate.toISOString());
+                    break;
+                }
+            }
+
+            // Use parsed date if found, otherwise fallback to email received time
+            transaction.date = transactionDate || receivedAt;
+            if (!transactionDate) {
+                console.log('ℹ️ Transaction Date not found in body, using email received time:', receivedAt.toISOString());
+            }
 
             // Check if we have minimum required fields
             if (!transaction.amount || !transaction.type) {
