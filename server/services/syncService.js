@@ -128,8 +128,8 @@ class SyncService {
                 // Get category ID
                 const categoryId = await this.getCategoryId(transaction.description, userId);
 
-                // Check if transaction already exists
-                const exists = await this.transactionExists(emailData.id);
+                // Check if transaction already exists for this user
+                const exists = await this.transactionExists(userId, emailData.id);
                 if (exists) {
                     console.log(`Transaction already exists for email ${emailData.id}`);
                     continue;
@@ -193,12 +193,12 @@ class SyncService {
     }
 
     /**
-     * Check if transaction already exists
+     * Check if transaction already exists for this user
      */
-    async transactionExists(emailId) {
+    async transactionExists(userId, emailId) {
         const result = await pool.query(
-            'SELECT id FROM transactions WHERE email_id = $1',
-            [emailId]
+            'SELECT id FROM transactions WHERE email_id = $1 AND user_id = $2',
+            [emailId, userId]
         );
         return result.rows.length > 0;
     }
