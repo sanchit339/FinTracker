@@ -186,7 +186,7 @@ class EmailParser {
             return 'Credit Card Bill';
         }
 
-        // Food & Dining
+        // Food & Dining (check early - specific)
         if (desc.includes('swiggy') || desc.includes('zomato') ||
             desc.includes('food') || desc.includes('restaurant') ||
             desc.includes('cafe') || desc.includes('pizza') ||
@@ -194,12 +194,15 @@ class EmailParser {
             return 'Food & Dining';
         }
 
-        // Digital Payments & UPI
-        if (desc.includes('gpay') || desc.includes('phonepe') ||
-            desc.includes('paytm') || desc.includes('upi') ||
-            desc.includes('@') || desc.includes('ybl') ||
-            desc.includes('okaxis') || desc.includes('payu')) {
-            return 'Digital Payments';
+        // Transportation (check before Digital Payments - specific)
+        if (desc.includes('uber') || desc.includes('ola') ||
+            desc.includes('rapido') || desc.includes('petrol') ||
+            desc.includes('fuel') || desc.includes('metro') ||
+            desc.includes('bus') || desc.includes('taxi') ||
+            desc.includes('chalo') || desc.includes('railway') ||
+            desc.includes('train') || desc.includes('irctc') ||
+            desc.includes('indian railways')) {
+            return 'Transportation';
         }
 
         // Shopping
@@ -209,13 +212,12 @@ class EmailParser {
             return 'Shopping';
         }
 
-        // Transportation
-        if (desc.includes('uber') || desc.includes('ola') ||
-            desc.includes('rapido') || desc.includes('petrol') ||
-            desc.includes('fuel') || desc.includes('metro') ||
-            desc.includes('bus') || desc.includes('taxi') ||
-            desc.includes('chalo')) {
-            return 'Transportation';
+        // Digital Payments & UPI (generic - check later)
+        if (desc.includes('gpay') || desc.includes('phonepe') ||
+            desc.includes('paytm') || desc.includes('upi') ||
+            desc.includes('@') || desc.includes('ybl') ||
+            desc.includes('okaxis') || desc.includes('payu')) {
+            return 'Digital Payments';
         }
 
         // Entertainment
