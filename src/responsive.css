@@ -1,0 +1,347 @@
+/* ===================================
+   COMPREHENSIVE RESPONSIVE DESIGN
+   Mobile-First Responsive Styles
+   =================================== */
+
+/* Tablet and below (< 1024px) */
+@media (max-width: 1024px) {
+  :root {
+    --spacing-xl: 1.5rem;
+    --spacing-2xl: 2rem;
+  }
+
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  /* Hide sidebar on tablets, show hamburger menu */
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    transition: left 0.3s ease;
+    z-index: 1000;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Analytics and Dashboard grids */
+  .summary-cards,
+  .charts-section,
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 768px) {
+  :root {
+    --spacing-lg: 1rem;
+    --spacing-xl: 1.25rem;
+    --spacing-2xl: 1.5rem;
+    --font-size-3xl: 1.5rem;
+    --font-size-4xl: 1.875rem;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  /* Buttons stack on mobile */
+  .controls-bar,
+  .filter-tabs,
+  .actions-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .controls-bar > *,
+  .filter-tabs > button,
+  .actions-group > button {
+    width: 100%;
+  }
+
+  /* Cards more compact on mobile */
+  .card {
+    padding: var(--spacing-md);
+  }
+
+  /* Transaction cards */
+  .transaction-card {
+    padding: var(--spacing-sm);
+  }
+
+  .transaction-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .transaction-right {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  /* Dashboard summary cards */
+  .summary-card {
+    padding: var(--spacing-md);
+  }
+
+  .summary-icon {
+    width:48px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+
+  /* Navigation */
+  .nav-links {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .nav-link {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Tables - make scrollable */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px;
+  }
+
+  /* Modal full screen on mobile */
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Forms */
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-row > * {
+    width: 100%;
+  }
+
+  /* Charts responsive */
+  .chart-container {
+    padding: var(--spacing-sm);
+  }
+
+  .pie-chart-card .chart-container {
+    padding: var(--spacing-xs);
+  }
+}
+
+/* Small Mobile (< 480px) */
+@media (max-width: 480px) {
+  :root {
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1rem;
+    --spacing-xl: 1.25rem;
+  }
+
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  /* Even more compact cards */
+  .card {
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+  }
+
+  /* Transaction cards very compact */
+  .transaction-card {
+    padding: 0.5rem;
+  }
+
+  .transaction-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .transaction-title {
+    font-size: 0.875rem;
+  }
+
+  .transaction-amount {
+    font-size: 1rem;
+  }
+
+  .transaction-meta {
+    font-size: 0.75rem;
+  }
+
+  /* Buttons smaller */
+  .btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-sm {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  /* Summary cards stack vertically */
+  .summary-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .summary-content {
+    align-items: center;
+  }
+
+  /* Category badges smaller */
+  .category-badge {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.625rem;
+  }
+
+  /* Analytics insights */
+  .insight-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  /* Page headers */
+  .page-header {
+    padding: var(--spacing-md) 0;
+  }
+
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  /* Hide less important info on tiny screens */
+  .meta-divider,
+  .transaction-balance {
+    display: none;
+  }
+}
+
+/* Landscape phones */
+@media (max-height: 500px) and (orientation: landscape) {
+  .modal-content {
+    max-height: 95vh;
+  }
+
+  .sidebar {
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .nav-link,
+  .filter-tab {
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Remove hover effects on touch devices */
+  .card:hover,
+  .transaction-card:hover {
+    transform: none;
+  }
+
+  /* Larger checkboxes and radio buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+  }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Use more crisp borders */
+  .card,
+  .btn,
+  input,
+  select {
+    border-width: 0.5px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sidebar,
+  .nav-header,
+  .btn,
+  .controls-bar {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
