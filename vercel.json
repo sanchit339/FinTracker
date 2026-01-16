@@ -13,16 +13,19 @@
             }
         }
     ],
-    "routes": [
+    "rewrites": [
         {
-            "src": "/api/(.*)",
-            "dest": "server/index.js"
+            "source": "/api/(.*)",
+            "destination": "/server/index.js"
         },
         {
-            "src": "/(.*)",
-            "dest": "/dist/$1"
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ],
+    "env": {
+        "NODE_VERSION": "20.x"
+    },
     "crons": [
         {
             "path": "/api/cron/sync-gmail",
@@ -30,3 +33,4 @@
         }
     ]
 }
+```
