@@ -290,49 +290,117 @@ function Analytics() {
       {/* Charts Section */}
       <div className="charts-section">
         {/* Pie Chart - Category Breakdown */}
-        <div className="analytics-card chart-card">
+        <div className="analytics-card chart-card pie-chart-card">
           <div className="card-header">
             <h3>Category Distribution</h3>
             <span className="badge">Spending Breakdown</span>
           </div>
           <div className="chart-container">
             {categoryBreakdown && categoryBreakdown.length > 0 ? (
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
+                  <defs>
+                    {/* Create gradient definitions for each category */}
+                    {categoryBreakdown.map((cat, index) => {
+                      const baseColor = getCategoryColor(cat.category);
+                      return (
+                        <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor={baseColor} stopOpacity={1} />
+                          <stop offset="100%" stopColor={baseColor} stopOpacity={0.7} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
                   <Pie
                     data={categoryBreakdown.map(cat => ({
                       name: cat.category,
                       value: parseFloat(cat.amount),
-                      percentage: cat.percentage
+                      percentage: cat.percentage,
+                      emoji: getCategoryEmoji(cat.category)
                     }))}
                     cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percentage }) => `${name}: ${percentage}%`}
-                    outerRadius={110}
-                    fill="#8884d8"
+                    cy="45%"
+                    innerRadius={85}
+                    outerRadius={130}
+                    paddingAngle={2}
                     dataKey="value"
+                    animationBegin={0}
+                    animationDuration={1000}
+                    animationEasing="ease-out"
+                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percentage, emoji }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = outerRadius + 25;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                      if (percentage < 5) return null; // Hide labels for small slices
+
+                      return (
+                        <g>
+                          <text
+                            x={x}
+                            y={y - 8}
+                            fill="#1F2937"
+                            textAnchor={x > cx ? 'start' : 'end'}
+                            dominantBaseline="central"
+                            style={{ fontSize: '20px' }}
+                          >
+                            {emoji}
+                          </text>
+                          <text
+                            x={x}
+                            y={y + 12}
+                            fill="#6B7280"
+                            textAnchor={x > cx ? 'start' : 'end'}
+                            dominantBaseline="central"
+                            style={{ fontSize: '13px', fontWeight: 600 }}
+                          >
+                            {percentage}%
+                          </text>
+                        </g>
+                      );
+                    }}
                   >
                     {categoryBreakdown.map((cat, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={getCategoryColor(cat.category)}
+                        fill={`url(#gradient-${index})`}
+                        stroke="white"
+                        strokeWidth={3}
                       />
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => formatCurrency(value)}
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      padding: '12px'
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="custom-tooltip">
+                            <div className="tooltip-header">
+                              <span className="tooltip-emoji">{data.emoji}</span>
+                              <span className="tooltip-category">{data.name}</span>
+                            </div>
+                            <div className="tooltip-amount">{formatCurrency(data.value)}</div>
+                            <div className="tooltip-percentage">{data.percentage}% of total</div>
+                          </div>
+                        );
+                      }
+                      return null;
                     }}
                   />
                   <Legend
                     verticalAlign="bottom"
-                    height={36}
+                    height={60}
                     iconType="circle"
+                    formatter={(value, entry) => {
+                      const emoji = getCategoryEmoji(value);
+                      return `${emoji} ${value}`;
+                    }}
+                    wrapperStyle={{
+                      paddingTop: '20px',
+                      fontSize: '13px',
+                      fontWeight: 500
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
