@@ -118,19 +118,34 @@ function Transactions() {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
 
-    // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
-    // Database stores dates as UTC midnight, which becomes 5:30 AM IST
-    const datePart = dateString.split('T')[0]; // "2026-01-04"
-    const [year, month, day] = datePart.split('-').map(Number);
+    // Parse the ISO date string
+    const date = new Date(dateString);
 
-    // Create date in local timezone at noon to avoid DST issues
-    const date = new Date(year, month - 1, day, 12, 0, 0);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
 
-    const formattedDay = String(day).padStart(2, '0');
-    const formattedMonth = String(month).padStart(2, '0');
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
 
-    // Since we don't have actual transaction time, just show the date
-    return `${formattedDay}/${formattedMonth}/${year}`;
+    // Determine AM/PM
+    const isPM = hours >= 12;
+    const period = isPM ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    // Get time emoji based on hour  
+    let timeEmoji = '';
+    if (hours >= 5 && hours < 12) {
+      timeEmoji = '☕'; // Morning
+    } else if (hours >= 12 && hours < 17) {
+      timeEmoji = '☀️'; // Afternoon
+    } else if (hours >= 17 && hours < 21) {
+      timeEmoji = '🌙'; // Evening
+    } else {
+      timeEmoji = '⭐'; // Night
+    }
+
+    return `${day}/${month}/${year} ${timeEmoji} ${String(displayHours).padStart(2, '0')}:${minutes} ${period}`;
   };
 
   const getCategoryColor = (category) => {
