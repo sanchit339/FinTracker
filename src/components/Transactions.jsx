@@ -661,20 +661,20 @@ function Transactions() {
           background: white;
           border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
-          padding: var(--spacing-lg);
+          padding: var(--spacing-sm) var(--spacing-md);
           transition: all 0.2s;
+          cursor: pointer;
         }
 
         .transaction-card:hover {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-          border-color: #D1D5DB;
+          transform: translateY(-1px);
         }
 
         .transaction-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: var(--spacing-md);
           gap: var(--spacing-md);
         }
 
@@ -686,13 +686,13 @@ function Transactions() {
         }
 
         .transaction-icon {
-          width: 48px;
-          height: 48px;
+          width: 40px;
+          height: 40px;
           border-radius: var(--radius-md);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.5rem;
+          font-size: 1.25rem;
           flex-shrink: 0;
         }
 
@@ -710,8 +710,8 @@ function Transactions() {
         }
 
         .transaction-title {
-          margin: 0 0 0.375rem 0;
-          font-size: 1rem;
+          margin: 0 0 0.25rem 0;
+          font-size: 0.95rem;
           font-weight: 600;
           color: var(--text-primary);
           overflow: hidden;
@@ -746,11 +746,11 @@ function Transactions() {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          gap: 0.5rem;
+          gap: 0.375rem;
         }
 
         .transaction-amount {
-          font-size: 1.25rem;
+          font-size: 1.125rem;
           font-weight: 700;
           white-space: nowrap;
         }
@@ -764,7 +764,7 @@ function Transactions() {
         }
 
         .category-badge {
-          padding: 0.25rem 0.75rem;
+          padding: 0.2rem 0.625rem;
           border-radius: var(--radius-md);
           font-size: var(--font-size-xs);
           font-weight: 600;
@@ -776,7 +776,8 @@ function Transactions() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: var(--spacing-md);
+          padding-top: var(--spacing-sm);
+          margin-top: var(--spacing-sm);
           border-top: 1px solid var(--border-color);
           font-size: var(--font-size-sm);
           color: var(--text-secondary);
