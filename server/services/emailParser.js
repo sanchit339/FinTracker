@@ -103,8 +103,14 @@ class EmailParser {
                     // Convert 2-digit year to 4-digit (26 → 2026)
                     year = year < 50 ? 2000 + year : 1900 + year;
 
-                    transactionDate = new Date(year, month, day);
-                    console.log('✓ Transaction Date (from email body):', transactionDate.toISOString());
+                    // Use the DATE from email body, but TIME from when Gmail received the email
+                    // This gives us the approximate transaction time (when the bank sent the email)
+                    const receivedHours = receivedAt.getHours();
+                    const receivedMinutes = receivedAt.getMinutes();
+                    const receivedSeconds = receivedAt.getSeconds();
+
+                    transactionDate = new Date(year, month, day, receivedHours, receivedMinutes, receivedSeconds);
+                    console.log('✓ Transaction Date (from email body + received time):', transactionDate.toISOString());
                     break;
                 }
             }
