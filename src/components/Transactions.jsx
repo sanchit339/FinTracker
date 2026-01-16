@@ -117,31 +117,20 @@ function Transactions() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+    // Database stores dates as UTC midnight, which becomes 5:30 AM IST
+    const datePart = dateString.split('T')[0]; // "2026-01-04"
+    const [year, month, day] = datePart.split('-').map(Number);
 
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    // Create date in local timezone at noon to avoid DST issues
+    const date = new Date(year, month - 1, day, 12, 0, 0);
 
-    const isPM = hours >= 12;
-    const period = isPM ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
+    const formattedDay = String(day).padStart(2, '0');
+    const formattedMonth = String(month).padStart(2, '0');
 
-    let timeEmoji = '';
-    if (hours >= 5 && hours < 12) {
-      timeEmoji = '☕';
-    } else if (hours >= 12 && hours < 17) {
-      timeEmoji = '☀️';
-    } else if (hours >= 17 && hours < 21) {
-      timeEmoji = '🌙';
-    } else {
-      timeEmoji = '⭐';
-    }
-
-    return `${day}-${month}-${year} ${timeEmoji} ${displayHours}:${minutes} ${period}`;
+    // Since we don't have actual transaction time, just show the date
+    return `${formattedDay}/${formattedMonth}/${year}`;
   };
 
   const getCategoryColor = (category) => {
