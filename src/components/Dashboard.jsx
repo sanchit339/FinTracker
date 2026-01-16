@@ -171,35 +171,16 @@ function Dashboard() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+    const datePart = dateString.split('T')[0]; // "2026-01-04"
+    const [year, month, day] = datePart.split('-').map(Number);
 
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const formattedDay = String(day).padStart(2, '0');
+    const formattedMonth = String(month).padStart(2, '0');
 
-    // Determine AM/PM and emoji
-    const isPM = hours >= 12;
-    const period = isPM ? 'PM' : 'AM';
-
-    // Convert to 12-hour format
-    const displayHours = hours % 12 || 12;
-
-    // Get time emoji based on hour
-    let timeEmoji = '';
-    if (hours >= 5 && hours < 12) {
-      timeEmoji = '☕'; // Morning
-    } else if (hours >= 12 && hours < 17) {
-      timeEmoji = '☀️'; // Afternoon
-    } else if (hours >= 17 && hours < 21) {
-      timeEmoji = '🌙'; // Evening
-    } else {
-      timeEmoji = '⭐'; // Night
-    }
-
-    return `${day}-${month}-${year} ${timeEmoji} ${displayHours}:${minutes} ${period}`;
+    // Return just the date (no time since we don't have actual transaction time)
+    return `${formattedDay}/${formattedMonth}/${year}`;
   };
 
   const formatLastSync = (date) => {
