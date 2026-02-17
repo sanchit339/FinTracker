@@ -53,16 +53,16 @@
 }
 
 .nav-item:hover {
-    background-color: rgba(15, 123, 108, 0.08);
+    background-color: rgba(31, 191, 159, 0.12);
     color: var(--color-text-primary);
-    border-color: rgba(15, 123, 108, 0.14);
+    border-color: rgba(31, 191, 159, 0.2);
 }
 
 .nav-item.active {
-    background: linear-gradient(135deg, #119081 0%, #0f7b6c 70%, #0b6156 100%);
+    background: linear-gradient(135deg, #40d9ba 0%, #1fbf9f 70%, #15a98d 100%);
     color: white;
-    border-color: rgba(8, 75, 66, 0.65);
-    box-shadow: 0 9px 18px rgba(13, 95, 84, 0.3);
+    border-color: rgba(20, 145, 120, 0.52);
+    box-shadow: 0 9px 18px rgba(31, 191, 159, 0.32);
 }
 
 .nav-icon {
@@ -81,10 +81,6 @@
     gap: var(--spacing-sm);
 }
 
-[data-theme="dark"] .sidebar {
-    background: linear-gradient(180deg, rgba(20, 29, 44, 0.94), rgba(17, 24, 38, 0.94));
-    box-shadow: 10px 0 24px rgba(3, 8, 17, 0.45);
-}
 
 @media (max-width: 768px) {
     .sidebar {

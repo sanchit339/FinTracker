@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 
-function Sidebar({ onLogout, theme, toggleTheme }) {
+function Sidebar({ onLogout }) {
     const location = useLocation();
 
     const navItems = [
@@ -34,10 +34,6 @@ function Sidebar({ onLogout, theme, toggleTheme }) {
             </nav>
 
             <div className="sidebar-footer">
-                <button onClick={toggleTheme} className="btn btn-ghost w-full">
-                    {theme === 'light' ? '🌙' : '☀️'}
-                    <span>{theme === 'light' ? 'Dark' : 'Light'} Mode</span>
-                </button>
                 <button onClick={onLogout} className="btn btn-ghost w-full text-danger">
                     🚪 Logout
                 </button>

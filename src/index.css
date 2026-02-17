@@ -14,14 +14,14 @@
   --color-text-muted: #7d8da3;
 
   /* Brand */
-  --color-primary: #0f7b6c;
-  --color-primary-hover: #0a6558;
-  --color-success: #17a56f;
+  --color-primary: #1fbf9f;
+  --color-primary-hover: #16a78b;
+  --color-success: #26c281;
   --color-danger: #de4f4f;
   --color-warning: #d4872f;
 
   /* Financial */
-  --color-income: #16956d;
+  --color-income: #25b37e;
   --color-expense: #d45555;
   --color-neutral: #5a6f89;
 
@@ -61,21 +61,6 @@
   --font-size-4xl: 2.25rem;
 }
 
-[data-theme="dark"] {
-  --color-background: #0c111d;
-  --color-surface: #121a2a;
-  --color-elevated: #152032;
-  --color-border: #253248;
-  --color-border-hover: #31435e;
-
-  --color-text-primary: #e7eef9;
-  --color-text-secondary: #bbcae2;
-  --color-text-muted: #8fa3c2;
-
-  --color-primary: #1ba38d;
-  --color-primary-hover: #16927f;
-}
-
 /* Reset & Base */
 * {
   margin: 0;
@@ -90,8 +75,8 @@ html {
 body {
   font-family: var(--font-family);
   background:
-    radial-gradient(circle at 10% 0%, rgba(13, 123, 108, 0.08), transparent 32%),
-    radial-gradient(circle at 90% 100%, rgba(58, 98, 164, 0.1), transparent 35%),
+    radial-gradient(circle at 10% 0%, rgba(31, 191, 159, 0.14), transparent 34%),
+    radial-gradient(circle at 90% 100%, rgba(58, 98, 164, 0.14), transparent 35%),
     var(--color-background);
   color: var(--color-text-primary);
   line-height: 1.6;
@@ -205,15 +190,15 @@ a:hover {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #11867a 0%, #0f7b6c 55%, #0c6257 100%);
+  background: linear-gradient(135deg, #34d3b3 0%, #1fbf9f 55%, #16a78b 100%);
   color: white;
-  border-color: #0d7467;
-  box-shadow: 0 8px 20px rgba(15, 123, 108, 0.28);
+  border-color: #149b81;
+  box-shadow: 0 8px 20px rgba(31, 191, 159, 0.32);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #129384 0%, #0f7b6c 55%, #0b5b50 100%);
-  border-color: #0a6558;
+  background: linear-gradient(135deg, #4adcc0 0%, #26c7a8 55%, #14a88d 100%);
+  border-color: #108b74;
   transform: translateY(-1px);
 }
 
@@ -283,7 +268,7 @@ a:hover {
 .input-group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(15, 123, 108, 0.18);
+  box-shadow: 0 0 0 3px rgba(31, 191, 159, 0.2);
 }
 
 /* Badge */
@@ -576,12 +561,6 @@ a:hover {
 .app-shell {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.96)),
-    var(--color-surface);
-}
-
-[data-theme="dark"] .app-shell {
-  background:
-    linear-gradient(180deg, rgba(13, 18, 30, 0.72), rgba(13, 18, 30, 0.94)),
     var(--color-surface);
 }
 

@@ -127,20 +127,20 @@ function Analytics() {
 
   const getCategoryColor = (category) => {
     const colors = {
-      'Food & Dining': '#F97316',
-      'Transportation': '#3B82F6',
-      'Shopping': '#EC4899',
-      'Bills & Utilities': '#8B5CF6',
-      'Entertainment': '#06B6D4',
-      'Healthcare': '#10B981',
-      'Salary': '#22C55E',
-      'Digital Payments': '#6366F1',
-      'Investment': '#10B981',
-      'Rent': '#EF4444',
-      'Credit Card Bill': '#F59E0B',
-      'Uncategorized': '#6B7280'
+      'Food & Dining': '#f59e55',
+      'Transportation': '#5aa9ff',
+      'Shopping': '#d78bff',
+      'Bills & Utilities': '#8d95ff',
+      'Entertainment': '#45c9e5',
+      'Healthcare': '#3ecf9e',
+      'Salary': '#2fc98f',
+      'Digital Payments': '#4f8eff',
+      'Investment': '#33cf97',
+      'Rent': '#ff7a87',
+      'Credit Card Bill': '#f7b955',
+      'Uncategorized': '#95a3b3'
     };
-    return colors[category] || '#6B7280';
+    return colors[category] || '#95a3b3';
   };
 
   const getCategoryEmoji = (category) => {
@@ -355,7 +355,7 @@ function Analytics() {
         yAxis,
         valueYField: 'expense',
         categoryXField: 'day',
-        stroke: am5.color(0xef4444),
+        stroke: am5.color(0xff7a87),
         tooltip: am5.Tooltip.new(root, {
           labelText: 'Day {categoryX}: ₹{valueY.formatNumber("#,###")}'
         })
@@ -364,7 +364,7 @@ function Analytics() {
     expenseSeries.data.setAll(dailyData);
     expenseSeries.strokes.template.setAll({ strokeWidth: 3 });
     expenseSeries.fills.template.setAll({
-      fill: am5.color(0xef4444),
+      fill: am5.color(0xff7a87),
       fillOpacity: 0.1,
       visible: true
     });
@@ -372,7 +372,7 @@ function Analytics() {
       am5.Bullet.new(root, {
         sprite: am5.Circle.new(root, {
           radius: 4,
-          fill: am5.color(0xef4444),
+          fill: am5.color(0xff7a87),
           stroke: am5.color(0xffffff),
           strokeWidth: 2
         })
@@ -386,7 +386,7 @@ function Analytics() {
         yAxis,
         valueYField: 'income',
         categoryXField: 'day',
-        stroke: am5.color(0x10b981),
+        stroke: am5.color(0x2fc98f),
         tooltip: am5.Tooltip.new(root, {
           labelText: 'Day {categoryX}: ₹{valueY.formatNumber("#,###")}'
         })
@@ -395,7 +395,7 @@ function Analytics() {
     incomeSeries.data.setAll(dailyData);
     incomeSeries.strokes.template.setAll({ strokeWidth: 3 });
     incomeSeries.fills.template.setAll({
-      fill: am5.color(0x10b981),
+      fill: am5.color(0x2fc98f),
       fillOpacity: 0.1,
       visible: true
     });
@@ -403,7 +403,7 @@ function Analytics() {
       am5.Bullet.new(root, {
         sprite: am5.Circle.new(root, {
           radius: 4,
-          fill: am5.color(0x10b981),
+          fill: am5.color(0x2fc98f),
           stroke: am5.color(0xffffff),
           strokeWidth: 2
         })

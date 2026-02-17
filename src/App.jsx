@@ -10,7 +10,6 @@ import Sidebar from './components/Sidebar';
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [theme, setTheme] = useState('light');
 
     useEffect(() => {
         // Check if user is authenticated
@@ -39,10 +38,9 @@ function App() {
             setLoading(false);
         }
 
-        // Load theme preference
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(savedTheme);
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        // Force light mode globally
+        localStorage.removeItem('theme');
+        document.documentElement.removeAttribute('data-theme');
     }, []);
 
     const handleLogin = (token) => {
@@ -53,13 +51,6 @@ function App() {
     const handleLogout = () => {
         localStorage.removeItem('token');
         setIsAuthenticated(false);
-    };
-
-    const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light';
-        setTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-        document.documentElement.setAttribute('data-theme', newTheme);
     };
 
     if (loading) {
@@ -77,7 +68,7 @@ function App() {
     return (
         <Router>
             <div className="App app-shell flex" style={{ minHeight: '100vh' }}>
-                <Sidebar onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+                <Sidebar onLogout={handleLogout} />
 
                 <main className="app-main" style={{ flex: 1, overflow: 'auto' }}>
                     <Routes>
