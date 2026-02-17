@@ -54,10 +54,16 @@ class GmailService {
             adjustedDate.setDate(adjustedDate.getDate() - 1);
             const dateStr = adjustedDate.toISOString().split('T')[0].replace(/-/g, '/');
 
-            // Build query: from HDFC alerts after the specified date
-            // ONLY fetch UPI transaction emails (not OTPs, statements, etc.)
-            // 'after:' excludes the specified date, so we subtract 1 day above to include our target date
-            const query = `from:(alerts@hdfcbank.net) subject:"UPI txn" after:${dateStr}`;
+            // Build query from configured HDFC sender filters.
+            // Keep subject open because HDFC templates/subjects vary and strict subject filters skip valid transactions.
+            // 'after:' excludes the specified date, so we subtract 1 day above to include our target date.
+            const hdfcFilters = gmailConfig.bankEmailFilters?.['HDFC Bank'] || {};
+            const fromList = Array.isArray(hdfcFilters.from) ? hdfcFilters.from.filter(Boolean) : [];
+
+            const senderClauses = [...fromList.map(sender => `from:${sender}`), 'from:hdfc'];
+            const fromQuery = `(${[...new Set(senderClauses)].join(' OR ')})`;
+
+            const query = `${fromQuery} after:${dateStr}`;
             console.log('Gmail search query:', query);
 
             // List messages
