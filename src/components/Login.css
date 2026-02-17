@@ -3,7 +3,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-surface);
+    background:
+        radial-gradient(circle at 18% 10%, rgba(15, 123, 108, 0.14), transparent 32%),
+        radial-gradient(circle at 88% 88%, rgba(53, 85, 140, 0.2), transparent 35%),
+        var(--color-surface);
     padding: var(--spacing-lg);
 }
 
@@ -13,11 +16,12 @@
 }
 
 .login-card {
-    background-color: var(--color-background);
+    background-color: rgba(255, 255, 255, 0.88);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     padding: var(--spacing-2xl);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 24px 42px rgba(13, 30, 56, 0.14);
+    backdrop-filter: blur(10px);
 }
 
 .login-header {
@@ -32,6 +36,7 @@
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     font-size: var(--font-size-3xl);
+    letter-spacing: -0.03em;
 }
 
 .logo-icon {
@@ -63,8 +68,9 @@
     margin-top: var(--spacing-lg);
     text-align: center;
     padding: var(--spacing-md);
-    background-color: var(--color-surface);
+    background-color: rgba(12, 123, 108, 0.06);
     border-radius: var(--radius-md);
+    border: 1px solid rgba(15, 123, 108, 0.14);
 }
 
 .demo-info code {

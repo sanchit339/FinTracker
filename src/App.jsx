@@ -76,10 +76,10 @@ function App() {
 
     return (
         <Router>
-            <div className="App flex" style={{ minHeight: '100vh' }}>
+            <div className="App app-shell flex" style={{ minHeight: '100vh' }}>
                 <Sidebar onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
 
-                <main style={{ flex: 1, backgroundColor: 'var(--color-surface)', overflow: 'auto' }}>
+                <main className="app-main" style={{ flex: 1, overflow: 'auto' }}>
                     <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/transactions" element={<Transactions />} />
