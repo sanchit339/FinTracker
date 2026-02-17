@@ -195,7 +195,9 @@ function Analytics() {
     const chart = root.container.children.push(
       am5percent.PieChart.new(root, {
         layout: root.verticalLayout,
-        innerRadius: am5.percent(35)
+        innerRadius: am5.percent(58),
+        startAngle: -90,
+        endAngle: 270
       })
     );
 
@@ -217,22 +219,50 @@ function Analytics() {
       strokeWidth: 2,
       tooltipText: '{category}\n{value.formatNumber("#,###")} INR ({valuePercentTotal.formatNumber("#.0")}%)'
     });
-
-    series.labels.template.setAll({
-      text: '{category}',
-      fontSize: 12,
-      fill: am5.color(0x374151)
+    series.slices.template.states.create('hover', {
+      scale: 1.04
     });
 
+    series.labels.template.setAll({
+      forceHidden: true
+    });
+    series.ticks.template.setAll({ forceHidden: true });
+
     series.data.setAll(categoryData);
+
+    const totalSpending = categoryData.reduce((sum, item) => sum + item.value, 0);
+    chart.seriesContainer.children.push(
+      am5.Label.new(root, {
+        text: `Total\n₹${Math.round(totalSpending).toLocaleString('en-IN')}`,
+        centerX: am5.percent(50),
+        centerY: am5.percent(50),
+        textAlign: 'center',
+        fill: am5.color(0x111827),
+        fontSize: 15,
+        fontWeight: '600'
+      })
+    );
 
     const legend = chart.children.push(
       am5.Legend.new(root, {
         centerX: am5.percent(50),
         x: am5.percent(50),
-        layout: root.horizontalLayout
+        layout: root.gridLayout,
+        width: am5.percent(100)
       })
     );
+    legend.labels.template.setAll({
+      fill: am5.color(0x374151),
+      fontSize: 12
+    });
+    legend.valueLabels.template.setAll({
+      fill: am5.color(0x6b7280),
+      fontSize: 12
+    });
+    legend.markers.template.setAll({
+      width: 10,
+      height: 10
+    });
     legend.data.setAll(series.dataItems);
 
     series.appear(800, 100);
@@ -279,9 +309,14 @@ function Analytics() {
         panX: false,
         panY: false,
         wheelX: 'none',
-        wheelY: 'none'
+        wheelY: 'none',
+        layout: root.verticalLayout
       })
     );
+
+    chart.plotContainer.setAll({
+      paddingTop: 10
+    });
 
     const xAxis = chart.xAxes.push(
       am5xy.CategoryAxis.new(root, {
@@ -298,6 +333,20 @@ function Analytics() {
         renderer: am5xy.AxisRendererY.new(root, {})
       })
     );
+    xAxis.get('renderer').labels.template.setAll({
+      fill: am5.color(0x6b7280),
+      fontSize: 11
+    });
+    yAxis.get('renderer').labels.template.setAll({
+      fill: am5.color(0x6b7280),
+      fontSize: 11
+    });
+    xAxis.get('renderer').grid.template.setAll({
+      strokeOpacity: 0.08
+    });
+    yAxis.get('renderer').grid.template.setAll({
+      strokeOpacity: 0.08
+    });
 
     const expenseSeries = chart.series.push(
       am5xy.LineSeries.new(root, {
@@ -314,11 +363,18 @@ function Analytics() {
     );
     expenseSeries.data.setAll(dailyData);
     expenseSeries.strokes.template.setAll({ strokeWidth: 3 });
+    expenseSeries.fills.template.setAll({
+      fill: am5.color(0xef4444),
+      fillOpacity: 0.1,
+      visible: true
+    });
     expenseSeries.bullets.push(() =>
       am5.Bullet.new(root, {
         sprite: am5.Circle.new(root, {
           radius: 4,
-          fill: am5.color(0xef4444)
+          fill: am5.color(0xef4444),
+          stroke: am5.color(0xffffff),
+          strokeWidth: 2
         })
       })
     );
@@ -338,11 +394,18 @@ function Analytics() {
     );
     incomeSeries.data.setAll(dailyData);
     incomeSeries.strokes.template.setAll({ strokeWidth: 3 });
+    incomeSeries.fills.template.setAll({
+      fill: am5.color(0x10b981),
+      fillOpacity: 0.1,
+      visible: true
+    });
     incomeSeries.bullets.push(() =>
       am5.Bullet.new(root, {
         sprite: am5.Circle.new(root, {
           radius: 4,
-          fill: am5.color(0x10b981)
+          fill: am5.color(0x10b981),
+          stroke: am5.color(0xffffff),
+          strokeWidth: 2
         })
       })
     );
@@ -357,9 +420,18 @@ function Analytics() {
     const legend = chart.children.push(
       am5.Legend.new(root, {
         centerX: am5.percent(50),
-        x: am5.percent(50)
+        x: am5.percent(50),
+        marginTop: 8
       })
     );
+    legend.labels.template.setAll({
+      fill: am5.color(0x374151),
+      fontSize: 12
+    });
+    legend.markers.template.setAll({
+      width: 10,
+      height: 10
+    });
     legend.data.setAll(chart.series.values);
 
     expenseSeries.appear(800);
@@ -985,10 +1057,14 @@ function Analytics() {
 
         .chart-card {
           min-height: 450px;
-          background: white;
-          border: 1px solid var(--border-color);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.09), transparent 35%),
+            radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.08), transparent 35%),
+            #ffffff;
+          border: 1px solid #e5e7eb;
           border-radius: var(--radius-lg);
           overflow: hidden;
+          box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
         }
 
         .chart-container {
@@ -996,12 +1072,14 @@ function Analytics() {
           display: flex;
           justify-content: center;
           align-items: center;
-          background: #FAFBFC;
+          background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         }
 
         .amchart-root {
           width: 100%;
-          height: 360px;
+          height: 380px;
+          border-radius: 12px;
+          overflow: hidden;
         }
 
         .empty-chart {
