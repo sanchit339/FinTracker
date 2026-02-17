@@ -86,10 +86,13 @@ class EmailParser {
                 console.log('✓ Balance:', transaction.balance);
             }
 
-            // Extract transaction date from email body (format: on DD-MM-YY)
+            // Extract transaction date from email body.
+            // HDFC templates vary (DD-MM-YY, DD-MM-YYYY, DD/MM/YY, DD/MM/YYYY).
             const datePatterns = [
-                /on\s+(\d{2})-(\d{2})-(\d{2})/i,  // on 04-01-26
-                /dated?\s+(\d{2})-(\d{2})-(\d{2})/i  // dated 04-01-26
+                /on\s+(\d{2})-(\d{2})-(\d{2,4})/i,
+                /on\s+(\d{2})\/(\d{2})\/(\d{2,4})/i,
+                /dated?\s+(\d{2})-(\d{2})-(\d{2,4})/i,
+                /dated?\s+(\d{2})\/(\d{2})\/(\d{2,4})/i
             ];
 
             let transactionDate = null;
@@ -98,10 +101,12 @@ class EmailParser {
                 if (dateMatch) {
                     const day = parseInt(dateMatch[1]);
                     const month = parseInt(dateMatch[2]) - 1; // JS months are 0-indexed
-                    let year = parseInt(dateMatch[3]);
+                    let year = parseInt(dateMatch[3], 10);
 
-                    // Convert 2-digit year to 4-digit (26 → 2026)
-                    year = year < 50 ? 2000 + year : 1900 + year;
+                    // Convert 2-digit year to 4-digit (26 -> 2026). Keep 4-digit as-is.
+                    if (year < 100) {
+                        year = year < 50 ? 2000 + year : 1900 + year;
+                    }
 
                     // Use DATE from the email body with TIME from Gmail-received timestamp in IST.
                     // This avoids server-timezone (UTC) shifts that can move 17th -> 18th in UI.
