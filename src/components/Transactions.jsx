@@ -118,34 +118,36 @@ function Transactions() {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
 
-    // Parse the ISO date string
     const date = new Date(dateString);
+    const formatter = new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    const parts = formatter.formatToParts(date);
+    const day = parts.find((p) => p.type === 'day')?.value || '--';
+    const month = parts.find((p) => p.type === 'month')?.value || '--';
+    const year = parts.find((p) => p.type === 'year')?.value || '----';
+    const hour = parts.find((p) => p.type === 'hour')?.value || '--';
+    const minute = parts.find((p) => p.type === 'minute')?.value || '--';
+    const period = parts.find((p) => p.type === 'dayPeriod')?.value || '';
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    const hour24 = parseInt(new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      hour12: false
+    }).format(date), 10);
 
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    let timeEmoji = '⭐';
+    if (hour24 >= 5 && hour24 < 12) timeEmoji = '☕';
+    else if (hour24 >= 12 && hour24 < 17) timeEmoji = '☀️';
+    else if (hour24 >= 17 && hour24 < 21) timeEmoji = '🌙';
 
-    // Determine AM/PM
-    const isPM = hours >= 12;
-    const period = isPM ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-
-    // Get time emoji based on hour  
-    let timeEmoji = '';
-    if (hours >= 5 && hours < 12) {
-      timeEmoji = '☕'; // Morning
-    } else if (hours >= 12 && hours < 17) {
-      timeEmoji = '☀️'; // Afternoon
-    } else if (hours >= 17 && hours < 21) {
-      timeEmoji = '🌙'; // Evening
-    } else {
-      timeEmoji = '⭐'; // Night
-    }
-
-    return `${day}/${month}/${year} ${timeEmoji} ${String(displayHours).padStart(2, '0')}:${minutes} ${period}`;
+    return `${day}/${month}/${year} ${timeEmoji} ${hour}:${minute} ${period}`;
   };
 
   const getCategoryColor = (category) => {

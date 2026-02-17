@@ -1,17 +1,91 @@
-import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { useState, useEffect, useRef } from 'react';
+
+const loadScript = (src) =>
+  new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(`script[src="${src}"]`);
+    if (existingScript) {
+      if (existingScript.dataset.loaded === 'true') {
+        resolve();
+        return;
+      }
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => {
+      script.dataset.loaded = 'true';
+      resolve();
+    };
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.body.appendChild(script);
+  });
+
+const loadAmCharts = (() => {
+  let promise = null;
+
+  return async () => {
+    if (window.am5 && window.am5percent && window.am5xy && window.am5themes_Animated) {
+      return;
+    }
+
+    if (!promise) {
+      promise = Promise.all([
+        loadScript('https://cdn.amcharts.com/lib/5/index.js'),
+        loadScript('https://cdn.amcharts.com/lib/5/percent.js'),
+        loadScript('https://cdn.amcharts.com/lib/5/xy.js'),
+        loadScript('https://cdn.amcharts.com/lib/5/themes/Animated.js')
+      ]);
+    }
+
+    await promise;
+  };
+})();
 
 function Analytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [chartsReady, setChartsReady] = useState(false);
+  const [chartsLoadError, setChartsLoadError] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  const pieChartRef = useRef(null);
+  const lineChartRef = useRef(null);
+  const pieRootRef = useRef(null);
+  const lineRootRef = useRef(null);
 
   useEffect(() => {
     fetchAnalytics();
   }, [selectedMonth]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const initAmCharts = async () => {
+      try {
+        await loadAmCharts();
+        if (isMounted) {
+          setChartsReady(true);
+        }
+      } catch (error) {
+        console.error('Failed to load amCharts:', error);
+        if (isMounted) {
+          setChartsLoadError('Failed to load charts');
+        }
+      }
+    };
+
+    initAmCharts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const fetchAnalytics = async () => {
     try {
@@ -86,6 +160,232 @@ function Analytics() {
     };
     return emojis[category] || '📦';
   };
+
+  useEffect(() => {
+    if (!chartsReady || !analytics || !pieChartRef.current) {
+      return;
+    }
+
+    const categoryData = (analytics.categoryBreakdown || []).map((cat) => ({
+      category: cat.category,
+      value: parseFloat(cat.amount || 0),
+      percentage: cat.percentage,
+      color: getCategoryColor(cat.category),
+      emoji: getCategoryEmoji(cat.category)
+    }));
+
+    if (pieRootRef.current) {
+      pieRootRef.current.dispose();
+      pieRootRef.current = null;
+    }
+
+    if (categoryData.length === 0) {
+      return;
+    }
+
+    const am5 = window.am5;
+    const am5percent = window.am5percent;
+    const am5themes_Animated = window.am5themes_Animated;
+
+    const root = am5.Root.new(pieChartRef.current);
+    pieRootRef.current = root;
+
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    const chart = root.container.children.push(
+      am5percent.PieChart.new(root, {
+        layout: root.verticalLayout,
+        innerRadius: am5.percent(35)
+      })
+    );
+
+    const series = chart.series.push(
+      am5percent.PieSeries.new(root, {
+        valueField: 'value',
+        categoryField: 'category',
+        legendValueText: '{valuePercentTotal.formatNumber("#.0")}%'
+      })
+    );
+
+    series.get('colors').set(
+      'colors',
+      categoryData.map((item) => am5.color(Number(`0x${item.color.replace('#', '')}`)))
+    );
+
+    series.slices.template.setAll({
+      stroke: am5.color(0xffffff),
+      strokeWidth: 2,
+      tooltipText: '{category}\n{value.formatNumber("#,###")} INR ({valuePercentTotal.formatNumber("#.0")}%)'
+    });
+
+    series.labels.template.setAll({
+      text: '{category}',
+      fontSize: 12,
+      fill: am5.color(0x374151)
+    });
+
+    series.data.setAll(categoryData);
+
+    const legend = chart.children.push(
+      am5.Legend.new(root, {
+        centerX: am5.percent(50),
+        x: am5.percent(50),
+        layout: root.horizontalLayout
+      })
+    );
+    legend.data.setAll(series.dataItems);
+
+    series.appear(800, 100);
+
+    return () => {
+      if (pieRootRef.current) {
+        pieRootRef.current.dispose();
+        pieRootRef.current = null;
+      }
+    };
+  }, [analytics, chartsReady]);
+
+  useEffect(() => {
+    if (!chartsReady || !analytics || !lineChartRef.current) {
+      return;
+    }
+
+    const dailyData = (analytics.dailySpending || []).map((item) => ({
+      day: String(item.day),
+      income: parseFloat(item.income || 0),
+      expense: parseFloat(item.expense || 0)
+    }));
+
+    if (lineRootRef.current) {
+      lineRootRef.current.dispose();
+      lineRootRef.current = null;
+    }
+
+    if (dailyData.length === 0) {
+      return;
+    }
+
+    const am5 = window.am5;
+    const am5xy = window.am5xy;
+    const am5themes_Animated = window.am5themes_Animated;
+
+    const root = am5.Root.new(lineChartRef.current);
+    lineRootRef.current = root;
+
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    const chart = root.container.children.push(
+      am5xy.XYChart.new(root, {
+        panX: false,
+        panY: false,
+        wheelX: 'none',
+        wheelY: 'none'
+      })
+    );
+
+    const xAxis = chart.xAxes.push(
+      am5xy.CategoryAxis.new(root, {
+        categoryField: 'day',
+        renderer: am5xy.AxisRendererX.new(root, {
+          minGridDistance: 30
+        })
+      })
+    );
+    xAxis.data.setAll(dailyData);
+
+    const yAxis = chart.yAxes.push(
+      am5xy.ValueAxis.new(root, {
+        renderer: am5xy.AxisRendererY.new(root, {})
+      })
+    );
+
+    const expenseSeries = chart.series.push(
+      am5xy.LineSeries.new(root, {
+        name: 'Expenses',
+        xAxis,
+        yAxis,
+        valueYField: 'expense',
+        categoryXField: 'day',
+        stroke: am5.color(0xef4444),
+        tooltip: am5.Tooltip.new(root, {
+          labelText: 'Day {categoryX}: ₹{valueY.formatNumber("#,###")}'
+        })
+      })
+    );
+    expenseSeries.data.setAll(dailyData);
+    expenseSeries.strokes.template.setAll({ strokeWidth: 3 });
+    expenseSeries.bullets.push(() =>
+      am5.Bullet.new(root, {
+        sprite: am5.Circle.new(root, {
+          radius: 4,
+          fill: am5.color(0xef4444)
+        })
+      })
+    );
+
+    const incomeSeries = chart.series.push(
+      am5xy.LineSeries.new(root, {
+        name: 'Income',
+        xAxis,
+        yAxis,
+        valueYField: 'income',
+        categoryXField: 'day',
+        stroke: am5.color(0x10b981),
+        tooltip: am5.Tooltip.new(root, {
+          labelText: 'Day {categoryX}: ₹{valueY.formatNumber("#,###")}'
+        })
+      })
+    );
+    incomeSeries.data.setAll(dailyData);
+    incomeSeries.strokes.template.setAll({ strokeWidth: 3 });
+    incomeSeries.bullets.push(() =>
+      am5.Bullet.new(root, {
+        sprite: am5.Circle.new(root, {
+          radius: 4,
+          fill: am5.color(0x10b981)
+        })
+      })
+    );
+
+    chart.set(
+      'cursor',
+      am5xy.XYCursor.new(root, {
+        behavior: 'none'
+      })
+    );
+
+    const legend = chart.children.push(
+      am5.Legend.new(root, {
+        centerX: am5.percent(50),
+        x: am5.percent(50)
+      })
+    );
+    legend.data.setAll(chart.series.values);
+
+    expenseSeries.appear(800);
+    incomeSeries.appear(800);
+    chart.appear(800, 100);
+
+    return () => {
+      if (lineRootRef.current) {
+        lineRootRef.current.dispose();
+        lineRootRef.current = null;
+      }
+    };
+  }, [analytics, chartsReady]);
+
+  useEffect(() => {
+    return () => {
+      if (pieRootRef.current) {
+        pieRootRef.current.dispose();
+        pieRootRef.current = null;
+      }
+      if (lineRootRef.current) {
+        lineRootRef.current.dispose();
+        lineRootRef.current = null;
+      }
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -296,114 +596,13 @@ function Analytics() {
             <span className="badge">Spending Breakdown</span>
           </div>
           <div className="chart-container">
-            {categoryBreakdown && categoryBreakdown.length > 0 ? (
-              <ResponsiveContainer width="100%" height={400}>
-                <PieChart>
-                  <defs>
-                    {/* Create gradient definitions for each category */}
-                    {categoryBreakdown.map((cat, index) => {
-                      const baseColor = getCategoryColor(cat.category);
-                      return (
-                        <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor={baseColor} stopOpacity={1} />
-                          <stop offset="100%" stopColor={baseColor} stopOpacity={0.7} />
-                        </linearGradient>
-                      );
-                    })}
-                  </defs>
-                  <Pie
-                    data={categoryBreakdown.map(cat => ({
-                      name: cat.category,
-                      value: parseFloat(cat.amount),
-                      percentage: cat.percentage,
-                      emoji: getCategoryEmoji(cat.category)
-                    }))}
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={85}
-                    outerRadius={130}
-                    paddingAngle={2}
-                    dataKey="value"
-                    animationBegin={0}
-                    animationDuration={1000}
-                    animationEasing="ease-out"
-                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percentage, emoji }) => {
-                      const RADIAN = Math.PI / 180;
-                      const radius = outerRadius + 25;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                      if (percentage < 5) return null; // Hide labels for small slices
-
-                      return (
-                        <g>
-                          <text
-                            x={x}
-                            y={y - 8}
-                            fill="#1F2937"
-                            textAnchor={x > cx ? 'start' : 'end'}
-                            dominantBaseline="central"
-                            style={{ fontSize: '20px' }}
-                          >
-                            {emoji}
-                          </text>
-                          <text
-                            x={x}
-                            y={y + 12}
-                            fill="#6B7280"
-                            textAnchor={x > cx ? 'start' : 'end'}
-                            dominantBaseline="central"
-                            style={{ fontSize: '13px', fontWeight: 600 }}
-                          >
-                            {percentage}%
-                          </text>
-                        </g>
-                      );
-                    }}
-                  >
-                    {categoryBreakdown.map((cat, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={`url(#gradient-${index})`}
-                        stroke="white"
-                        strokeWidth={3}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="custom-tooltip">
-                            <div className="tooltip-header">
-                              <span className="tooltip-emoji">{data.emoji}</span>
-                              <span className="tooltip-category">{data.name}</span>
-                            </div>
-                            <div className="tooltip-amount">{formatCurrency(data.value)}</div>
-                            <div className="tooltip-percentage">{data.percentage}% of total</div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={60}
-                    iconType="circle"
-                    formatter={(value, entry) => {
-                      const emoji = getCategoryEmoji(value);
-                      return `${emoji} ${value}`;
-                    }}
-                    wrapperStyle={{
-                      paddingTop: '20px',
-                      fontSize: '13px',
-                      fontWeight: 500
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            {chartsLoadError ? (
+              <div className="empty-chart">
+                <div className="empty-icon">⚠️</div>
+                <p>{chartsLoadError}</p>
+              </div>
+            ) : categoryBreakdown && categoryBreakdown.length > 0 ? (
+              <div ref={pieChartRef} className="amchart-root" />
             ) : (
               <div className="empty-chart">
                 <div className="empty-icon">📊</div>
@@ -420,50 +619,13 @@ function Analytics() {
             <span className="badge">Day-by-Day</span>
           </div>
           <div className="chart-container">
-            {analytics.dailySpending && analytics.dailySpending.length > 0 ? (
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={analytics.dailySpending}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="day"
-                    label={{ value: 'Day of Month', position: 'insideBottom', offset: -5 }}
-                    stroke="#6b7280"
-                  />
-                  <YAxis
-                    label={{ value: 'Amount (₹)', angle: -90, position: 'insideLeft' }}
-                    stroke="#6b7280"
-                  />
-                  <Tooltip
-                    formatter={(value) => formatCurrency(value)}
-                    labelFormatter={(label) => `Day ${label}`}
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      padding: '12px'
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="expense"
-                    stroke="#EF4444"
-                    strokeWidth={2}
-                    name="Expenses"
-                    dot={{ fill: '#EF4444', r: 3 }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="income"
-                    stroke="#10B981"
-                    strokeWidth={2}
-                    name="Income"
-                    dot={{ fill: '#10B981', r: 3 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            {chartsLoadError ? (
+              <div className="empty-chart">
+                <div className="empty-icon">⚠️</div>
+                <p>{chartsLoadError}</p>
+              </div>
+            ) : analytics.dailySpending && analytics.dailySpending.length > 0 ? (
+              <div ref={lineChartRef} className="amchart-root" />
             ) : (
               <div className="empty-chart">
                 <div className="empty-icon">📈</div>
@@ -835,6 +997,11 @@ function Analytics() {
           justify-content: center;
           align-items: center;
           background: #FAFBFC;
+        }
+
+        .amchart-root {
+          width: 100%;
+          height: 360px;
         }
 
         .empty-chart {
