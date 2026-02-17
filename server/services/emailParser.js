@@ -103,13 +103,23 @@ class EmailParser {
                     // Convert 2-digit year to 4-digit (26 → 2026)
                     year = year < 50 ? 2000 + year : 1900 + year;
 
-                    // Use the DATE from email body, but TIME from when Gmail received the email
-                    // This gives us the approximate transaction time (when the bank sent the email)
-                    const receivedHours = receivedAt.getHours();
-                    const receivedMinutes = receivedAt.getMinutes();
-                    const receivedSeconds = receivedAt.getSeconds();
+                    // Use DATE from the email body with TIME from Gmail-received timestamp in IST.
+                    // This avoids server-timezone (UTC) shifts that can move 17th -> 18th in UI.
+                    const istTimeParts = new Intl.DateTimeFormat('en-GB', {
+                        timeZone: 'Asia/Kolkata',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).formatToParts(receivedAt);
 
-                    transactionDate = new Date(year, month, day, receivedHours, receivedMinutes, receivedSeconds);
+                    const istHour = parseInt(istTimeParts.find(p => p.type === 'hour')?.value || '0', 10);
+                    const istMinute = parseInt(istTimeParts.find(p => p.type === 'minute')?.value || '0', 10);
+                    const istSecond = parseInt(istTimeParts.find(p => p.type === 'second')?.value || '0', 10);
+
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const timeStr = `${String(istHour).padStart(2, '0')}:${String(istMinute).padStart(2, '0')}:${String(istSecond).padStart(2, '0')}`;
+                    transactionDate = new Date(`${dateStr}T${timeStr}+05:30`);
                     console.log('✓ Transaction Date (from email body + received time):', transactionDate.toISOString());
                     break;
                 }
