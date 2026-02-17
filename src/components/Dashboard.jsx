@@ -172,36 +172,41 @@ function Dashboard() {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
 
-    const date = new Date(dateString);
-    const formatter = new Intl.DateTimeFormat('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-    const parts = formatter.formatToParts(date);
-    const day = parts.find((p) => p.type === 'day')?.value || '--';
-    const month = parts.find((p) => p.type === 'month')?.value || '--';
-    const year = parts.find((p) => p.type === 'year')?.value || '----';
-    const hour = parts.find((p) => p.type === 'hour')?.value || '--';
-    const minute = parts.find((p) => p.type === 'minute')?.value || '--';
-    const period = parts.find((p) => p.type === 'dayPeriod')?.value || '';
+    const raw = String(dateString).trim();
+    const directMatch = raw.match(/(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
 
-    const hour24 = parseInt(new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Kolkata',
-      hour: '2-digit',
-      hour12: false
-    }).format(date), 10);
+    let day = '--';
+    let month = '--';
+    let year = '----';
+    let minute = '--';
+    let hour24 = 0;
+
+    if (directMatch) {
+      year = directMatch[1];
+      month = directMatch[2];
+      day = directMatch[3];
+      hour24 = parseInt(directMatch[4], 10);
+      minute = directMatch[5];
+    } else {
+      const date = new Date(dateString);
+      if (!Number.isNaN(date.getTime())) {
+        day = String(date.getDate()).padStart(2, '0');
+        month = String(date.getMonth() + 1).padStart(2, '0');
+        year = String(date.getFullYear());
+        hour24 = date.getHours();
+        minute = String(date.getMinutes()).padStart(2, '0');
+      }
+    }
 
     let timeEmoji = '⭐';
     if (hour24 >= 5 && hour24 < 12) timeEmoji = '☕';
     else if (hour24 >= 12 && hour24 < 17) timeEmoji = '☀️';
     else if (hour24 >= 17 && hour24 < 21) timeEmoji = '🌙';
 
-    return `${day}/${month}/${year} ${timeEmoji} ${hour}:${minute} ${period}`;
+    const hour12 = hour24 % 12 || 12;
+    const period = hour24 >= 12 ? 'PM' : 'AM';
+
+    return `${day}/${month}/${year} ${timeEmoji} ${String(hour12).padStart(2, '0')}:${minute} ${period}`;
   };
 
   const formatLastSync = (date) => {
