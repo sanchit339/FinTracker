@@ -352,12 +352,12 @@ function Dashboard() {
         .header-content h1 {
           font-size: 2rem;
           font-weight: 700;
-          color: var(--text-primary);
+          color: var(--color-text-primary);
           margin: 0 0 0.25rem 0;
         }
 
         .subtitle {
-          color: var(--text-muted);
+          color: var(--color-text-muted);
           font-size: var(--font-size-sm);
         }
 
@@ -372,7 +372,7 @@ function Dashboard() {
           background: white;
           padding: var(--spacing-lg);
           border-radius: var(--radius-lg);
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--color-border);
           display: flex;
           gap: var(--spacing-md);
           align-items: flex-start;
@@ -396,7 +396,7 @@ function Dashboard() {
 
         .stat-label {
           font-size: var(--font-size-sm);
-          color: var(--text-secondary);
+          color: var(--color-text-secondary);
           margin: 0 0 0.25rem 0;
           white-space: nowrap;
         }
@@ -405,14 +405,14 @@ function Dashboard() {
           font-size: 1.5rem;
           font-weight: 700;
           margin: 0 0 0.25rem 0;
-          color: var(--text-primary);
+          color: var(--color-text-primary);
           word-break: break-word;
         }
 
         .stat-change {
           font-size: var(--font-size-xs);
           margin: 0;
-          color: var(--text-secondary);
+          color: var(--color-text-secondary);
         }
 
         .stat-change.positive {
@@ -426,7 +426,7 @@ function Dashboard() {
         .recent-transactions-section {
           background: white;
           border-radius: var(--radius-lg);
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--color-border);
           padding: var(--spacing-lg);
         }
 
@@ -436,14 +436,14 @@ function Dashboard() {
           align-items: center;
           margin-bottom: var(--spacing-lg);
           padding-bottom: var(--spacing-md);
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--color-border);
         }
 
         .section-header h3 {
           margin: 0;
           font-size: 1.25rem;
           font-weight: 700;
-          color: var(--text-primary);
+          color: var(--color-text-primary);
         }
 
         .transactions-cards {
@@ -457,14 +457,14 @@ function Dashboard() {
           justify-content: space-between;
           align-items: center;
           padding: var(--spacing-md);
-          border: 1px solid var(--border-color);
+          border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
           transition: all 0.2s;
         }
 
         .transaction-card:hover {
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-          border-color: #D1D5DB;
+          border-color: var(--color-border-hover);
         }
 
         .transaction-left {
@@ -503,7 +503,7 @@ function Dashboard() {
           margin: 0 0 0.25rem 0;
           font-size: var(--font-size-md);
           font-weight: 600;
-          color: var(--text-primary);
+          color: var(--color-text-primary);
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -512,7 +512,7 @@ function Dashboard() {
         .transaction-meta {
           margin: 0;
           font-size: var(--font-size-sm);
-          color: var(--text-secondary);
+          color: var(--color-text-secondary);
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
