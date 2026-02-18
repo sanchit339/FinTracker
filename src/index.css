@@ -14,8 +14,9 @@
   --color-text-muted: #7d8da3;
 
   /* Brand */
-  --color-primary: #1fbf9f;
-  --color-primary-hover: #16a78b;
+  --color-brand: lab(51.3415% -41.5657 15.3527);
+  --color-primary: var(--color-brand);
+  --color-primary-hover: #13a58b;
   --color-success: #26c281;
   --color-danger: #de4f4f;
   --color-warning: #d4872f;

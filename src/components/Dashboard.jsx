@@ -372,7 +372,8 @@ function Dashboard() {
           background: white;
           padding: var(--spacing-lg);
           border-radius: var(--radius-lg);
-          border: 1px solid var(--color-border);
+          border: 1px solid #cad8e6;
+          box-shadow: 0 1px 2px rgba(17, 34, 62, 0.04);
           display: flex;
           gap: var(--spacing-md);
           align-items: flex-start;
@@ -426,7 +427,7 @@ function Dashboard() {
         .recent-transactions-section {
           background: white;
           border-radius: var(--radius-lg);
-          border: 1px solid var(--color-border);
+          border: 1px solid #cad8e6;
           padding: var(--spacing-lg);
         }
 
@@ -436,7 +437,7 @@ function Dashboard() {
           align-items: center;
           margin-bottom: var(--spacing-lg);
           padding-bottom: var(--spacing-md);
-          border-bottom: 1px solid var(--color-border);
+          border-bottom: 1px solid #d5e1ec;
         }
 
         .section-header h3 {
@@ -457,7 +458,7 @@ function Dashboard() {
           justify-content: space-between;
           align-items: center;
           padding: var(--spacing-md);
-          border: 1px solid var(--color-border);
+          border: 1px solid #d2deea;
           border-radius: var(--radius-md);
           transition: all 0.2s;
         }
