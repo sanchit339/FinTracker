@@ -48,7 +48,8 @@ const loadAmCharts = (() => {
 function Analytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [chartsReady, setChartsReady] = useState(false);
+  const [amChartsReady, setAmChartsReady] = useState(false);
+  const [eChartsReady, setEChartsReady] = useState(false);
   const [chartsLoadError, setChartsLoadError] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -56,8 +57,23 @@ function Analytics() {
   });
   const pieChartRef = useRef(null);
   const lineChartRef = useRef(null);
-  const pieRootRef = useRef(null);
   const lineRootRef = useRef(null);
+
+  const loadECharts = (() => {
+    let promise = null;
+
+    return async () => {
+      if (window.echarts) {
+        return;
+      }
+
+      if (!promise) {
+        promise = loadScript('https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js');
+      }
+
+      await promise;
+    };
+  })();
 
   useEffect(() => {
     fetchAnalytics();
@@ -68,9 +84,10 @@ function Analytics() {
 
     const initAmCharts = async () => {
       try {
-        await loadAmCharts();
+        await Promise.all([loadAmCharts(), loadECharts()]);
         if (isMounted) {
-          setChartsReady(true);
+          setAmChartsReady(true);
+          setEChartsReady(true);
         }
       } catch (error) {
         console.error('Failed to load amCharts:', error);
@@ -162,121 +179,62 @@ function Analytics() {
   };
 
   useEffect(() => {
-    if (!chartsReady || !analytics || !pieChartRef.current) {
+    if (!eChartsReady || !analytics || !pieChartRef.current) {
       return;
     }
 
     const categoryData = (analytics.categoryBreakdown || []).map((cat) => ({
-      category: cat.category,
       value: parseFloat(cat.amount || 0),
-      percentage: cat.percentage,
-      color: getCategoryColor(cat.category),
-      emoji: getCategoryEmoji(cat.category)
+      name: cat.category,
+      itemStyle: { color: getCategoryColor(cat.category) }
     }));
-
-    if (pieRootRef.current) {
-      pieRootRef.current.dispose();
-      pieRootRef.current = null;
-    }
 
     if (categoryData.length === 0) {
       return;
     }
 
-    const am5 = window.am5;
-    const am5percent = window.am5percent;
-    const am5themes_Animated = window.am5themes_Animated;
+    const chart = window.echarts.init(pieChartRef.current);
+    const option = {
+      legend: {
+        top: 'bottom',
+        textStyle: { color: '#4a5b72' }
+      },
+      toolbox: {
+        show: true,
+        feature: {
+          mark: { show: true },
+          dataView: { show: true, readOnly: true },
+          restore: { show: true },
+          saveAsImage: { show: true }
+        }
+      },
+      series: [
+        {
+          name: 'Category Distribution',
+          type: 'pie',
+          radius: [50, 180],
+          center: ['50%', '45%'],
+          roseType: 'area',
+          itemStyle: {
+            borderRadius: 8
+          },
+          data: categoryData
+        }
+      ]
+    };
 
-    const root = am5.Root.new(pieChartRef.current);
-    pieRootRef.current = root;
-
-    root.setThemes([am5themes_Animated.new(root)]);
-
-    const chart = root.container.children.push(
-      am5percent.PieChart.new(root, {
-        layout: root.verticalLayout,
-        innerRadius: am5.percent(58),
-        startAngle: -90,
-        endAngle: 270
-      })
-    );
-
-    const series = chart.series.push(
-      am5percent.PieSeries.new(root, {
-        valueField: 'value',
-        categoryField: 'category',
-        legendValueText: '{valuePercentTotal.formatNumber("#.0")}%'
-      })
-    );
-
-    series.get('colors').set(
-      'colors',
-      categoryData.map((item) => am5.color(Number(`0x${item.color.replace('#', '')}`)))
-    );
-
-    series.slices.template.setAll({
-      stroke: am5.color(0xffffff),
-      strokeWidth: 2,
-      tooltipText: '{category}\n{value.formatNumber("#,###")} INR ({valuePercentTotal.formatNumber("#.0")}%)'
-    });
-    series.slices.template.states.create('hover', {
-      scale: 1.04
-    });
-
-    series.labels.template.setAll({
-      forceHidden: true
-    });
-    series.ticks.template.setAll({ forceHidden: true });
-
-    series.data.setAll(categoryData);
-
-    const totalSpending = categoryData.reduce((sum, item) => sum + item.value, 0);
-    chart.seriesContainer.children.push(
-      am5.Label.new(root, {
-        text: `Total\n₹${Math.round(totalSpending).toLocaleString('en-IN')}`,
-        centerX: am5.percent(50),
-        centerY: am5.percent(50),
-        textAlign: 'center',
-        fill: am5.color(0x111827),
-        fontSize: 15,
-        fontWeight: '600'
-      })
-    );
-
-    const legend = chart.children.push(
-      am5.Legend.new(root, {
-        centerX: am5.percent(50),
-        x: am5.percent(50),
-        layout: root.gridLayout,
-        width: am5.percent(100)
-      })
-    );
-    legend.labels.template.setAll({
-      fill: am5.color(0x374151),
-      fontSize: 12
-    });
-    legend.valueLabels.template.setAll({
-      fill: am5.color(0x6b7280),
-      fontSize: 12
-    });
-    legend.markers.template.setAll({
-      width: 10,
-      height: 10
-    });
-    legend.data.setAll(series.dataItems);
-
-    series.appear(800, 100);
+    chart.setOption(option);
+    const handleResize = () => chart.resize();
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      if (pieRootRef.current) {
-        pieRootRef.current.dispose();
-        pieRootRef.current = null;
-      }
+      window.removeEventListener('resize', handleResize);
+      chart.dispose();
     };
-  }, [analytics, chartsReady]);
+  }, [analytics, eChartsReady]);
 
   useEffect(() => {
-    if (!chartsReady || !analytics || !lineChartRef.current) {
+    if (!amChartsReady || !analytics || !lineChartRef.current) {
       return;
     }
 
@@ -444,14 +402,10 @@ function Analytics() {
         lineRootRef.current = null;
       }
     };
-  }, [analytics, chartsReady]);
+  }, [analytics, amChartsReady]);
 
   useEffect(() => {
     return () => {
-      if (pieRootRef.current) {
-        pieRootRef.current.dispose();
-        pieRootRef.current = null;
-      }
       if (lineRootRef.current) {
         lineRootRef.current.dispose();
         lineRootRef.current = null;
