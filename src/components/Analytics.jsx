@@ -194,29 +194,53 @@ function Analytics() {
     }
 
     const chart = window.echarts.init(pieChartRef.current);
+    const uiComplementaryColors = [
+      '#1fbf9f',
+      '#4f8eff',
+      '#f59e55',
+      '#d78bff',
+      '#45c9e5',
+      '#ff7a87',
+      '#8d95ff',
+      '#3ecf9e'
+    ];
+
     const option = {
-      legend: {
-        top: 'bottom',
-        textStyle: { color: '#4a5b72' }
+      color: uiComplementaryColors,
+      tooltip: {
+        trigger: 'item'
       },
-      toolbox: {
-        show: true,
-        feature: {
-          mark: { show: true },
-          dataView: { show: true, readOnly: true },
-          restore: { show: true },
-          saveAsImage: { show: true }
-        }
+      legend: {
+        top: '5%',
+        left: 'center',
+        textStyle: { color: '#4a5b72' }
       },
       series: [
         {
           name: 'Category Distribution',
           type: 'pie',
-          radius: [50, 180],
-          center: ['50%', '45%'],
-          roseType: 'area',
+          radius: ['40%', '70%'],
+          center: ['50%', '58%'],
+          avoidLabelOverlap: false,
+          padAngle: 5,
           itemStyle: {
             borderRadius: 8
+          },
+          label: {
+            show: false,
+            position: 'center'
+          },
+          emphasis: {
+            label: {
+              show: true,
+              formatter: '{b}',
+              fontSize: 32,
+              fontWeight: 'bold',
+              color: '#0f1728'
+            }
+          },
+          labelLine: {
+            show: false
           },
           data: categoryData
         }
