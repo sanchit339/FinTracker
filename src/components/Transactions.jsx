@@ -20,8 +20,13 @@ function Transactions() {
   });
 
   useEffect(() => {
-    fetchTransactions();
-  }, [filters, dateFilter]);
+    // Reset offset when search term changes so we start from page 1
+    if (filters.offset !== 0 && searchTerm) {
+      setFilters(prev => ({ ...prev, offset: 0 }));
+    } else {
+      fetchTransactions();
+    }
+  }, [filters, dateFilter, searchTerm]);
 
   // Separate effect for monthly stats - only when date filter changes
   useEffect(() => {
@@ -65,6 +70,10 @@ function Transactions() {
 
       if (filters.type !== 'ALL') {
         params.append('type', filters.type);
+      }
+
+      if (searchTerm) {
+        params.append('search', searchTerm);
       }
 
       // Add date filter to backend query
@@ -173,21 +182,12 @@ function Transactions() {
     return colors[category] || '#6B7280';
   };
 
-  // Client-side search filter (only for description/bank/category search)
-  const filteredTransactions = searchTerm
-    ? transactions.filter(txn =>
-      txn.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      txn.bank_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      txn.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    : transactions;
-
-  // Calculate totals from currently displayed/filtered transactions
+  // Calculate totals from currently displayed transactions (which are already filtered by backend)
   const displayedTotals = {
-    income: filteredTransactions
+    income: transactions
       .filter(t => t.type === 'CREDIT')
       .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
-    expense: filteredTransactions
+    expense: transactions
       .filter(t => t.type === 'DEBIT')
       .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0)
   };
@@ -204,7 +204,7 @@ function Transactions() {
           <h1>Transactions</h1>
           <p className="subtitle">
             {isFiltered
-              ? `${filteredTransactions.length} matching transaction${filteredTransactions.length !== 1 ? 's' : ''}`
+              ? `${pagination.total} matching transaction${pagination.total !== 1 ? 's' : ''}`
               : `${pagination.total} transaction${pagination.total !== 1 ? 's' : ''} this month`
             }
           </p>
@@ -303,7 +303,7 @@ function Transactions() {
             </p>
             <h3 className="summary-value">{formatCurrency(displayTotals.income)}</h3>
             <p className="summary-count">
-              {filteredTransactions.filter(t => t.type === 'CREDIT').length} transaction{filteredTransactions.filter(t => t.type === 'CREDIT').length !== 1 ? 's' : ''}
+              {transactions.filter(t => t.type === 'CREDIT').length} transaction{transactions.filter(t => t.type === 'CREDIT').length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -321,7 +321,7 @@ function Transactions() {
             </p>
             <h3 className="summary-value">{formatCurrency(displayTotals.expense)}</h3>
             <p className="summary-count">
-              {filteredTransactions.filter(t => t.type === 'DEBIT').length} transaction{filteredTransactions.filter(t => t.type === 'DEBIT').length !== 1 ? 's' : ''}
+              {transactions.filter(t => t.type === 'DEBIT').length} transaction{transactions.filter(t => t.type === 'DEBIT').length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -335,7 +335,7 @@ function Transactions() {
           </div>
         )}
 
-        {filteredTransactions.length === 0 ? (
+        {transactions.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📭</div>
             <h3>No transactions found</h3>
@@ -348,7 +348,7 @@ function Transactions() {
           </div>
         ) : (
           <div className="transactions-container">
-            {filteredTransactions.map((txn) => (
+            {transactions.map((txn) => (
               <div key={txn.id} className="transaction-card">
                 <div className="transaction-header">
                   <div className="transaction-left">

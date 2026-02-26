@@ -12,11 +12,11 @@ router.get('/transactions/recent', async (req, res) => {
     try {
         const userId = req.user.userId;
         const {
-            limit = 20,
             offset = 0,
             startDate,
             endDate,
-            type  // DEBIT or CREDIT
+            type,  // DEBIT or CREDIT
+            search // Search term
         } = req.query;
 
         let query = `
@@ -53,18 +53,50 @@ router.get('/transactions/recent', async (req, res) => {
             params.push(type);
         }
 
+        // Add search filter if provided
+        if (search) {
+            paramCount++;
+            query += ` AND (t.description ILIKE $${paramCount} OR c.name ILIKE $${paramCount} OR a.bank_name ILIKE $${paramCount})`;
+            params.push(`%${search}%`);
+        }
+
         // Get total count for pagination
-        const countQuery = `
+        let countQuery = `
             SELECT COUNT(*) as count
             FROM transactions t
             LEFT JOIN categories c ON t.category_id = c.id
             LEFT JOIN accounts a ON t.account_id = a.id
             WHERE t.user_id = $1
-        ` + (startDate ? ` AND t.transaction_date >= $2` : '')
-            + (endDate ? ` AND t.transaction_date <= $${startDate ? 3 : 2}` : '')
-            + (type && (type === 'DEBIT' || type === 'CREDIT') ? ` AND t.type = $${paramCount}` : '');
+        `;
 
-        const countResult = await pool.query(countQuery, params.slice(0, paramCount));
+        let countParamCount = 1;
+        const countParams = [userId];
+
+        if (startDate) {
+            countParamCount++;
+            countQuery += ` AND t.transaction_date >= $${countParamCount}`;
+            countParams.push(startDate);
+        }
+
+        if (endDate) {
+            countParamCount++;
+            countQuery += ` AND t.transaction_date <= $${countParamCount}`;
+            countParams.push(endDate);
+        }
+
+        if (type && (type === 'DEBIT' || type === 'CREDIT')) {
+            countParamCount++;
+            countQuery += ` AND t.type = $${countParamCount}`;
+            countParams.push(type);
+        }
+
+        if (search) {
+            countParamCount++;
+            countQuery += ` AND (t.description ILIKE $${countParamCount} OR c.name ILIKE $${countParamCount} OR a.bank_name ILIKE $${countParamCount})`;
+            countParams.push(`%${search}%`);
+        }
+
+        const countResult = await pool.query(countQuery, countParams);
         const totalCount = parseInt(countResult.rows[0]?.count || 0);
 
         // Add sorting, limit and offset
