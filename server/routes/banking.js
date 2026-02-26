@@ -12,6 +12,7 @@ router.get('/transactions/recent', async (req, res) => {
     try {
         const userId = req.user.userId;
         const {
+            limit = 20,
             offset = 0,
             startDate,
             endDate,
