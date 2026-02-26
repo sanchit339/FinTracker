@@ -134,7 +134,7 @@ function Dashboard() {
         }, 5000);
       } else {
         // Handle API errors
-        const errorMsg = data.error || 'Unknown error occurred';
+        const errorMsg = data.details || data.error || 'Unknown error occurred';
         console.error('Sync error:', errorMsg);
 
         if (errorMsg.includes('Gmail not connected')) {

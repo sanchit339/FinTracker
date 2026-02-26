@@ -169,6 +169,21 @@ router.post('/sync', authenticateToken, async (req, res) => {
         res.json(results);
     } catch (error) {
         console.error('Sync endpoint error:', error);
+
+        if (error.message === 'Gmail not connected') {
+            return res.status(403).json({
+                error: 'Gmail not connected',
+                details: error.message
+            });
+        }
+
+        if (error.message.includes('refresh token') || error.message.includes('invalid_grant')) {
+            return res.status(401).json({
+                error: 'Gmail session expired',
+                details: error.message
+            });
+        }
+
         res.status(500).json({
             error: 'Failed to sync emails',
             details: error.message
@@ -188,6 +203,21 @@ router.post('/sync-all', authenticateToken, async (req, res) => {
         res.json(results);
     } catch (error) {
         console.error('Sync-all endpoint error:', error);
+
+        if (error.message === 'Gmail not connected') {
+            return res.status(403).json({
+                error: 'Gmail not connected',
+                details: error.message
+            });
+        }
+
+        if (error.message.includes('refresh token') || error.message.includes('invalid_grant')) {
+            return res.status(401).json({
+                error: 'Gmail session expired',
+                details: error.message
+            });
+        }
+
         res.status(500).json({
             error: 'Failed to sync all emails',
             details: error.message
