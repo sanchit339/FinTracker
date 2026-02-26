@@ -11,12 +11,16 @@ class GmailService {
         );
     }
 
-    // Generate OAuth URL for user authorization
-    getAuthUrl() {
+    // Generate OAuth URL for user authorization with state
+    getAuthUrl(userId) {
+        // Encode the userId into the state parameter securely
+        const state = Buffer.from(JSON.stringify({ userId })).toString('base64');
+
         return this.oauth2Client.generateAuthUrl({
             access_type: 'offline',
             scope: gmailConfig.scopes,
-            prompt: 'consent'
+            prompt: 'consent',
+            state: state
         });
     }
 

@@ -13,7 +13,7 @@ router.get('/auth/url', authenticateToken, (req, res) => {
         console.log('🔍 Headers:', req.headers.authorization ? 'Token present' : 'NO TOKEN');
         console.log('🔍 User from token:', req.user);
 
-        const authUrl = gmailService.getAuthUrl();
+        const authUrl = gmailService.getAuthUrl(req.user.userId);
         res.json({ authUrl });
     } catch (error) {
         console.error('Error generating auth URL:', error);
@@ -30,6 +30,21 @@ router.get('/callback', async (req, res) => {
             return res.status(400).send('Authorization code not provided');
         }
 
+        if (!state) {
+            return res.status(400).send('Security parameter (state) missing from request');
+        }
+
+        // Decode the state parameter to get the original userId
+        let userId;
+        try {
+            const decodedState = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
+            userId = decodedState.userId;
+            if (!userId) throw new Error('Invalid state payload');
+        } catch (err) {
+            console.error('Failed to decode state parameter:', err);
+            return res.status(400).send('Invalid security parameter');
+        }
+
         // Exchange code for tokens
         const tokens = await gmailService.getTokensFromCode(code);
 
@@ -39,19 +54,20 @@ router.get('/callback', async (req, res) => {
         const profile = await gmail.users.getProfile({ userId: 'me' });
         const userEmail = profile.data.emailAddress;
 
-        // Save tokens to the most recently created user (or use state parameter if implemented)
-        // For now, saving to the most recent user who doesn't have Gmail connected
+        // Save tokens strictly to the user who initiated the OAuth flow
         const userResult = await pool.query(
-            'SELECT id FROM users WHERE gmail_refresh_token IS NULL ORDER BY id DESC LIMIT 1'
+            'SELECT id FROM users WHERE id = $1',
+            [userId]
         );
 
         if (userResult.rows.length > 0) {
-            const userId = userResult.rows[0].id;
             await pool.query(
                 'UPDATE users SET gmail_email = $1, gmail_refresh_token = $2 WHERE id = $3',
                 [userEmail, tokens.refresh_token, userId]
             );
             console.log(`Gmail connected for user ${userId}: ${userEmail}`);
+        } else {
+            return res.status(404).send('Associated user account no longer exists');
         }
 
         // Return success page
