@@ -3,7 +3,11 @@ const asBoolean = (value, fallback = false) => {
         return fallback;
     }
 
-    return String(value).toLowerCase() === 'true';
+    const normalized = String(value).trim().toLowerCase();
+    return normalized === 'true'
+        || normalized === '1'
+        || normalized === 'yes'
+        || normalized === 'on';
 };
 
 export const getFeatures = () => ({
