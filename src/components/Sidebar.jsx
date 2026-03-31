@@ -3,11 +3,13 @@ import './Sidebar.css';
 
 function Sidebar({ onLogout }) {
     const location = useLocation();
+    const insightsEnabled = String(import.meta.env.VITE_ENABLE_HYBRID_INSIGHTS || 'false').toLowerCase() === 'true';
 
     const navItems = [
         { path: '/', icon: '📊', label: 'Dashboard' },
         { path: '/transactions', icon: '💸', label: 'Transactions' },
         { path: '/analytics', icon: '📈', label: 'Analytics' },
+        ...(insightsEnabled ? [{ path: '/insights', icon: '🧠', label: 'Insights' }] : []),
         { path: '/settings', icon: '⚙️', label: 'Settings' }
     ];
 

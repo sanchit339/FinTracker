@@ -1,0 +1,22 @@
+name: Hybrid Insights Compute
+
+on:
+  schedule:
+    # Daily run at 01:15 UTC (06:45 IST)
+    - cron: '15 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  compute-insights:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger hybrid insights cron endpoint
+        run: |
+          curl --fail-with-body -X POST ${{ secrets.VERCEL_URL }}/api/cron/compute-insights \
+               -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+               -H "Content-Type: application/json"
+
+      - name: Report failure
+        if: failure()
+        run: echo "Hybrid insights compute failed - check Vercel logs"

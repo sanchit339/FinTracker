@@ -17,6 +17,7 @@ A modern, secure portfolio website with integrated financial tracking dashboard 
 - 💰 Real-time transaction monitoring from bank emails
 - 📊 Transaction history with filtering and search
 -  Analytics and spending insights
+- 🧠 Hybrid Insights (feature-flagged): rule-based patterns + clustering snapshots
 
 ## 🛠️ Tech Stack
 
@@ -200,6 +201,9 @@ docker-compose -f docker-compose.prod.yml up -d
 | `GMAIL_CLIENT_ID` | Gmail API client ID | - |
 | `GMAIL_CLIENT_SECRET` | Gmail API client secret | - |
 | `GMAIL_REDIRECT_URI` | Gmail OAuth redirect | http://localhost:3000/api/gmail/callback |
+| `CRON_SECRET` | Secret used by Vercel/GitHub cron endpoints | (set in production) |
+| `ENABLE_HYBRID_INSIGHTS` | Backend toggle for `/api/insights` and cron compute | false |
+| `VITE_ENABLE_HYBRID_INSIGHTS` | Frontend toggle for `/insights` page and sidebar item | false |
 
 ## 🤝 Contributing
 

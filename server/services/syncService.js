@@ -209,8 +209,8 @@ class SyncService {
     async insertTransaction(userId, accountId, categoryId, transaction, emailId) {
         await pool.query(
             `INSERT INTO transactions 
-            (user_id, account_id, category_id, type, amount, description, balance_after, transaction_date, email_id) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            (user_id, account_id, category_id, type, amount, description, merchant, balance_after, transaction_date, email_id) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
                 userId,
                 accountId,
@@ -218,6 +218,7 @@ class SyncService {
                 transaction.type,
                 transaction.amount,
                 transaction.description,
+                transaction.merchant,
                 transaction.balance,
                 transaction.date || new Date(),
                 emailId

@@ -100,3 +100,16 @@ Plus **Vercel daily cron** at midnight as backup.
 ---
 
 ✅ **Best of both worlds:** Free 6-hour sync via GitHub Actions + Vercel daily backup!
+
+---
+
+## Hybrid Insights Workflow (New)
+
+There is a second workflow at `.github/workflows/compute-insights.yml`:
+
+- **Name:** Hybrid Insights Compute
+- **Schedule:** Daily at 01:15 UTC (06:45 IST)
+- **Endpoint:** `/api/cron/compute-insights`
+- **Secrets used:** `VERCEL_URL`, `CRON_SECRET` (same as Gmail workflow)
+
+This workflow computes cached pattern + cluster snapshots for the new `/insights` page.

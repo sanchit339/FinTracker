@@ -4,12 +4,14 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
 import Analytics from './components/Analytics';
+import Insights from './components/Insights';
 import Settings from './components/Settings';
 import Sidebar from './components/Sidebar';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
+    const insightsEnabled = String(import.meta.env.VITE_ENABLE_HYBRID_INSIGHTS || 'false').toLowerCase() === 'true';
 
     useEffect(() => {
         // Check if user is authenticated
@@ -75,6 +77,7 @@ function App() {
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/transactions" element={<Transactions />} />
                         <Route path="/analytics" element={<Analytics />} />
+                        {insightsEnabled && <Route path="/insights" element={<Insights />} />}
                         <Route path="/settings" element={<Settings />} />
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>

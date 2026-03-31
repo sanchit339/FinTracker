@@ -45,6 +45,10 @@ CRON_SECRET=<generate-32-char-random-string>
 
 # Frontend URL (will be your Vercel deployment URL)
 FRONTEND_URL=https://your-app.vercel.app
+
+# Hybrid Insights feature rollout (new)
+ENABLE_HYBRID_INSIGHTS=false
+VITE_ENABLE_HYBRID_INSIGHTS=false
 ```
 
 **To generate random secrets:**

@@ -10,6 +10,7 @@ import notificationRoutes from './routes/notifications.js';
 import gmailRoutes from './routes/gmail.js';
 import analyticsRoutes from './routes/analytics.js';
 import cronRoutes from './routes/cron.js';
+import insightsRoutes from './routes/insights.js';
 import { authenticateToken } from './middleware/auth.js';
 
 dotenv.config();
@@ -55,6 +56,7 @@ app.use('/api/banking', authenticateToken, bankingRoutes);
 app.use('/api/gmail', gmailRoutes); // Auth handled per-route (callback needs to be public)
 app.use('/api/notifications', authenticateToken, notificationRoutes);
 app.use('/api/analytics', authenticateToken, analyticsRoutes);
+app.use('/api/insights', insightsRoutes);
 app.use('/api/cron', cronRoutes); // No auth - protected by CRON_SECRET
 
 // Error handling middleware

@@ -42,6 +42,10 @@ FRONTEND_URL=https://your-app.vercel.app
 
 # Node Environment
 NODE_ENV=production
+
+# Hybrid Insights feature rollout (new)
+ENABLE_HYBRID_INSIGHTS=false
+VITE_ENABLE_HYBRID_INSIGHTS=false
 ```
 
 **Generate secrets with:**
