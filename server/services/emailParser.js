@@ -211,7 +211,11 @@ class EmailParser {
         if (desc.includes('swiggy') || desc.includes('zomato') ||
             desc.includes('food') || desc.includes('restaurant') ||
             desc.includes('cafe') || desc.includes('pizza') ||
-            desc.includes('burger') || desc.includes('dominos')) {
+            desc.includes('burger') || desc.includes('dominos') ||
+            desc.includes('hotel') ||
+            desc.includes('sangita maruti pujari') ||
+            desc.includes('radhakrushna shamrao mahadik') ||
+            desc.includes('sudhakar chandrakant khobrekar')) {
             return 'Food & Dining';
         }
 
@@ -233,7 +237,16 @@ class EmailParser {
             return 'Shopping';
         }
 
-        // Digital Payments & UPI (generic - check later)
+        // Bills & Utilities
+        if (desc.includes('electricity') || desc.includes('water') ||
+            desc.includes('gas') || desc.includes('broadband') ||
+            desc.includes('mobile') || desc.includes('recharge') ||
+            desc.includes('bill') || desc.includes('jio') ||
+            desc.includes('airtel') || desc.includes('vi')) {
+            return 'Bills & Utilities';
+        }
+
+        // Digital Payments & UPI (generic - keep after specific biller checks)
         if (desc.includes('gpay') || desc.includes('phonepe') ||
             desc.includes('paytm') || desc.includes('upi') ||
             desc.includes('@') || desc.includes('ybl') ||
@@ -246,15 +259,6 @@ class EmailParser {
             desc.includes('prime') || desc.includes('hotstar') ||
             desc.includes('movie') || desc.includes('game')) {
             return 'Entertainment';
-        }
-
-        // Bills & Utilities
-        if (desc.includes('electricity') || desc.includes('water') ||
-            desc.includes('gas') || desc.includes('broadband') ||
-            desc.includes('mobile') || desc.includes('recharge') ||
-            desc.includes('bill') || desc.includes('jio') ||
-            desc.includes('airtel') || desc.includes('vi')) {
-            return 'Bills & Utilities';
         }
 
         // Healthcare
