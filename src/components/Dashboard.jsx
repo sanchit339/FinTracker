@@ -182,19 +182,31 @@ function Dashboard() {
     let hour24 = 0;
 
     if (directMatch) {
-      year = directMatch[1];
-      month = directMatch[2];
-      day = directMatch[3];
-      hour24 = parseInt(directMatch[4], 10);
-      minute = directMatch[5];
+      const utcDate = new Date(Date.UTC(
+        parseInt(directMatch[1], 10),
+        parseInt(directMatch[2], 10) - 1,
+        parseInt(directMatch[3], 10),
+        parseInt(directMatch[4], 10),
+        parseInt(directMatch[5], 10)
+      ));
+      
+      // Add 5 hours 30 mins for Mumbai time
+      utcDate.setTime(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+
+      year = String(utcDate.getUTCFullYear());
+      month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+      day = String(utcDate.getUTCDate()).padStart(2, '0');
+      hour24 = utcDate.getUTCHours();
+      minute = String(utcDate.getUTCMinutes()).padStart(2, '0');
     } else {
       const date = new Date(dateString);
       if (!Number.isNaN(date.getTime())) {
-        day = String(date.getDate()).padStart(2, '0');
-        month = String(date.getMonth() + 1).padStart(2, '0');
-        year = String(date.getFullYear());
-        hour24 = date.getHours();
-        minute = String(date.getMinutes()).padStart(2, '0');
+        const utcDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+        day = String(utcDate.getUTCDate()).padStart(2, '0');
+        month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+        year = String(utcDate.getUTCFullYear());
+        hour24 = utcDate.getUTCHours();
+        minute = String(utcDate.getUTCMinutes()).padStart(2, '0');
       }
     }
 
