@@ -164,6 +164,8 @@ router.post('/accounts/link', async (req, res) => {
         console.error('Link account error:', error);
         res.status(500).json({ error: 'Failed to link account' });
     }
+});
+
 // Get available categories (system + user's custom categories if any)
 router.get('/categories', async (req, res) => {
     try {
