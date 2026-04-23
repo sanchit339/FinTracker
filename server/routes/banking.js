@@ -216,7 +216,7 @@ router.put('/transactions/:id/category', async (req, res) => {
         // Update the category
         const result = await pool.query(
             `UPDATE transactions 
-             SET category_id = $1, updated_at = CURRENT_TIMESTAMP 
+             SET category_id = $1 
              WHERE id = $2 AND user_id = $3 
              RETURNING id, category_id`,
             [categoryId, id, userId]
