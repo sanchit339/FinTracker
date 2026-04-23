@@ -171,10 +171,10 @@ router.get('/categories', async (req, res) => {
     try {
         const userId = req.user.userId;
         const result = await pool.query(
-            `SELECT id, name, color, icon, is_system 
+            `SELECT DISTINCT ON (name) id, name, color, icon, is_system 
              FROM categories 
              WHERE user_id = $1 OR is_system = true 
-             ORDER BY is_system DESC, name ASC`,
+             ORDER BY name ASC, is_system ASC`,
             [userId]
         );
         res.json({ categories: result.rows });
