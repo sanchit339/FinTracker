@@ -18,6 +18,54 @@ function Transactions() {
     income: 0,
     expense: 0
   });
+  const [categories, setCategories] = useState([]);
+  const [editingTxId, setEditingTxId] = useState(null);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/banking/categories', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  const handleCategoryUpdate = async (txId, newCategoryId) => {
+    if (!newCategoryId) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/banking/transactions/${txId}/category`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ categoryId: newCategoryId })
+      });
+      if (response.ok) {
+        const category = categories.find(c => c.id === parseInt(newCategoryId));
+        setTransactions(prev => prev.map(tx => {
+          if (tx.id === txId) {
+            return { ...tx, category_id: parseInt(newCategoryId), category_name: category ? category.name : null };
+          }
+          return tx;
+        }));
+        setEditingTxId(null);
+      }
+    } catch (error) {
+      console.error('Error updating category:', error);
+    }
+  };
 
   useEffect(() => {
     // Reset offset when search term changes so we start from page 1
@@ -388,16 +436,42 @@ function Transactions() {
                     <div className={`transaction-amount ${txn.type.toLowerCase()}`}>
                       {txn.type === 'DEBIT' ? '-' : '+'}{formatCurrency(txn.amount)}
                     </div>
-                    {txn.category_name && (
-                      <div
-                        className="category-badge"
-                        style={{
-                          backgroundColor: `${getCategoryColor(txn.category_name)}15`,
-                          color: getCategoryColor(txn.category_name),
-                          borderColor: `${getCategoryColor(txn.category_name)}30`
-                        }}
+                    {editingTxId === txn.id ? (
+                      <select 
+                        className="category-select" 
+                        defaultValue={txn.category_id || ''}
+                        onChange={(e) => handleCategoryUpdate(txn.id, e.target.value)}
+                        onBlur={() => setEditingTxId(null)}
+                        autoFocus
                       >
-                        {txn.category_name}
+                        <option value="" disabled>Select Category</option>
+                        {categories.map(c => (
+                            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {txn.category_name ? (
+                          <div
+                            className="category-badge editable-badge"
+                            style={{
+                              backgroundColor: `${getCategoryColor(txn.category_name)}15`,
+                              color: getCategoryColor(txn.category_name),
+                              borderColor: `${getCategoryColor(txn.category_name)}30`
+                            }}
+                            onClick={() => setEditingTxId(txn.id)}
+                            title="Click to edit category"
+                          >
+                            {txn.category_name} ✏️
+                          </div>
+                        ) : (
+                          <button 
+                            className="btn btn-sm btn-ghost add-category-btn" 
+                            onClick={() => setEditingTxId(txn.id)}
+                          >
+                            + Add Category
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -800,6 +874,36 @@ function Transactions() {
           border-top: 1px solid var(--border-color);
           font-size: var(--font-size-sm);
           color: var(--text-secondary);
+        }
+
+        .editable-badge {
+          cursor: pointer;
+          transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .editable-badge:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .category-select {
+          padding: 0.25rem 0.5rem;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--primary-color);
+          background-color: white;
+          font-size: var(--font-size-sm);
+          color: var(--text-primary);
+          cursor: pointer;
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .add-category-btn {
+          padding: 0.2rem 0.5rem;
+          font-size: 0.75rem;
+          height: auto;
+          min-height: 0;
+          color: var(--text-muted);
         }
 
         .transaction-date {

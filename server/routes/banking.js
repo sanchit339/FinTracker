@@ -164,6 +164,70 @@ router.post('/accounts/link', async (req, res) => {
         console.error('Link account error:', error);
         res.status(500).json({ error: 'Failed to link account' });
     }
+// Get available categories (system + user's custom categories if any)
+router.get('/categories', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const result = await pool.query(
+            `SELECT id, name, color, icon, is_system 
+             FROM categories 
+             WHERE user_id = $1 OR is_system = true 
+             ORDER BY is_system DESC, name ASC`,
+            [userId]
+        );
+        res.json({ categories: result.rows });
+    } catch (error) {
+        console.error('Fetch categories error:', error);
+        res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+});
+
+// Update transaction category
+router.put('/transactions/:id/category', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { categoryId } = req.body;
+        const userId = req.user.userId;
+
+        // Verify the transaction belongs to the user
+        const txCheck = await pool.query(
+            'SELECT id FROM transactions WHERE id = $1 AND user_id = $2',
+            [id, userId]
+        );
+
+        if (txCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Transaction not found or unauthorized' });
+        }
+
+        // Verify the category is valid (system or belongs to user)
+        if (categoryId !== null) {
+            const catCheck = await pool.query(
+                'SELECT id FROM categories WHERE id = $1 AND (user_id = $2 OR is_system = true)',
+                [categoryId, userId]
+            );
+
+            if (catCheck.rows.length === 0) {
+                return res.status(400).json({ error: 'Invalid category' });
+            }
+        }
+
+        // Update the category
+        const result = await pool.query(
+            `UPDATE transactions 
+             SET category_id = $1, updated_at = CURRENT_TIMESTAMP 
+             WHERE id = $2 AND user_id = $3 
+             RETURNING id, category_id`,
+            [categoryId, id, userId]
+        );
+
+        res.json({ 
+            message: 'Category updated successfully',
+            transaction: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Update transaction category error:', error);
+        res.status(500).json({ error: 'Failed to update transaction category' });
+    }
 });
 
 export default router;
