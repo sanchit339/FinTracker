@@ -568,3 +568,9 @@ a:hover {
 .app-main {
   background: transparent;
 }
+
+@media (max-width: 768px) {
+  .app-main {
+    padding-bottom: 70px;
+  }
+}
