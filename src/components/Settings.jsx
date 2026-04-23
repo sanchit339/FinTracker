@@ -439,6 +439,18 @@ function Settings() {
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        @media (max-width: 768px) {
+          .dashboard-page {
+            padding: var(--spacing-md);
+          }
+          .button-group {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .button-group .btn {
+            width: 100%;
+          }
+        }
       `}</style>
         </div>
     );
