@@ -1,108 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
-
-const loadScript = (src) =>
-  new Promise((resolve, reject) => {
-    const existingScript = document.querySelector(`script[src="${src}"]`);
-    if (existingScript) {
-      if (existingScript.dataset.loaded === 'true') {
-        resolve();
-        return;
-      }
-      existingScript.addEventListener('load', () => resolve(), { once: true });
-      existingScript.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.onload = () => {
-      script.dataset.loaded = 'true';
-      resolve();
-    };
-    script.onerror = () => reject(new Error(`Failed to load ${src}`));
-    document.body.appendChild(script);
-  });
-
-const loadAmCharts = (() => {
-  let promise = null;
-
-  return async () => {
-    if (window.am5 && window.am5percent && window.am5xy && window.am5themes_Animated) {
-      return;
-    }
-
-    if (!promise) {
-      promise = Promise.all([
-        loadScript('https://cdn.amcharts.com/lib/5/index.js'),
-        loadScript('https://cdn.amcharts.com/lib/5/percent.js'),
-        loadScript('https://cdn.amcharts.com/lib/5/xy.js'),
-        loadScript('https://cdn.amcharts.com/lib/5/themes/Animated.js')
-      ]);
-    }
-
-    await promise;
-  };
-})();
+import { useState, useEffect } from 'react';
+import {
+  PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid
+} from 'recharts';
 
 function Analytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [amChartsReady, setAmChartsReady] = useState(false);
-  const [eChartsReady, setEChartsReady] = useState(false);
-  const [chartsLoadError, setChartsLoadError] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-  const pieChartRef = useRef(null);
-  const lineChartRef = useRef(null);
-  const lineRootRef = useRef(null);
-
-  const loadECharts = (() => {
-    let promise = null;
-
-    return async () => {
-      if (window.echarts) {
-        return;
-      }
-
-      if (!promise) {
-        promise = loadScript('https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js');
-      }
-
-      await promise;
-    };
-  })();
 
   useEffect(() => {
     fetchAnalytics();
   }, [selectedMonth]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const initAmCharts = async () => {
-      try {
-        await Promise.all([loadAmCharts(), loadECharts()]);
-        if (isMounted) {
-          setAmChartsReady(true);
-          setEChartsReady(true);
-        }
-      } catch (error) {
-        console.error('Failed to load amCharts:', error);
-        if (isMounted) {
-          setChartsLoadError('Failed to load charts');
-        }
-      }
-    };
-
-    initAmCharts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const fetchAnalytics = async () => {
     try {
@@ -178,264 +90,57 @@ function Analytics() {
     return emojis[category] || '📦';
   };
 
-  useEffect(() => {
-    if (!eChartsReady || !analytics || !pieChartRef.current) {
-      return;
+  // Custom tooltips for nice iOS-like appearance
+  const CustomPieTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0,0,0,0.05)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          borderRadius: '12px',
+          padding: '12px 16px',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+        }}>
+          <p style={{ margin: 0, fontWeight: 600, color: '#1c1c1e', fontSize: '14px' }}>
+            {getCategoryEmoji(payload[0].name)} {payload[0].name}
+          </p>
+          <p style={{ margin: '4px 0 0 0', color: payload[0].payload.fill, fontWeight: 700, fontSize: '16px' }}>
+            {formatCurrency(payload[0].value)}
+          </p>
+        </div>
+      );
     }
+    return null;
+  };
 
-    const categoryData = (analytics.categoryBreakdown || []).map((cat) => ({
-      value: parseFloat(cat.amount || 0),
-      name: cat.category,
-      itemStyle: { color: getCategoryColor(cat.category) }
-    }));
-
-    if (categoryData.length === 0) {
-      return;
+  const CustomAreaTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0,0,0,0.05)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          borderRadius: '12px',
+          padding: '12px 16px',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+        }}>
+          <p style={{ margin: 0, color: '#8e8e93', fontSize: '12px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Day {label}
+          </p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ margin: '6px 0 0 0', color: entry.color, fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: entry.color, display: 'inline-block' }}></span>
+              {entry.name}: {formatCurrency(entry.value)}
+            </p>
+          ))}
+        </div>
+      );
     }
-
-    const chart = window.echarts.init(pieChartRef.current);
-    const uiComplementaryColors = [
-      '#1fbf9f',
-      '#4f8eff',
-      '#f59e55',
-      '#d78bff',
-      '#45c9e5',
-      '#ff7a87',
-      '#8d95ff',
-      '#3ecf9e'
-    ];
-
-    const option = {
-      color: uiComplementaryColors,
-      tooltip: {
-        trigger: 'item'
-      },
-      legend: {
-        top: '5%',
-        left: 'center',
-        textStyle: { color: '#4a5b72' }
-      },
-      series: [
-        {
-          name: 'Category Distribution',
-          type: 'pie',
-          radius: ['40%', '70%'],
-          center: ['50%', '58%'],
-          avoidLabelOverlap: false,
-          padAngle: 5,
-          itemStyle: {
-            borderRadius: 8
-          },
-          label: {
-            show: false,
-            position: 'center'
-          },
-          emphasis: {
-            label: {
-              show: true,
-              formatter: '{b}',
-              fontSize: 32,
-              fontWeight: 'bold',
-              color: '#0f1728'
-            }
-          },
-          labelLine: {
-            show: false
-          },
-          data: categoryData
-        }
-      ]
-    };
-
-    chart.setOption(option);
-    const handleResize = () => chart.resize();
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      chart.dispose();
-    };
-  }, [analytics, eChartsReady]);
-
-  useEffect(() => {
-    if (!amChartsReady || !analytics || !lineChartRef.current) {
-      return;
-    }
-
-    const dailyData = (analytics.dailySpending || []).map((item) => ({
-      day: String(item.day),
-      income: parseFloat(item.income || 0),
-      expense: parseFloat(item.expense || 0)
-    }));
-
-    if (lineRootRef.current) {
-      lineRootRef.current.dispose();
-      lineRootRef.current = null;
-    }
-
-    if (dailyData.length === 0) {
-      return;
-    }
-
-    const am5 = window.am5;
-    const am5xy = window.am5xy;
-    const am5themes_Animated = window.am5themes_Animated;
-
-    const root = am5.Root.new(lineChartRef.current);
-    lineRootRef.current = root;
-
-    root.setThemes([am5themes_Animated.new(root)]);
-
-    const chart = root.container.children.push(
-      am5xy.XYChart.new(root, {
-        panX: false,
-        panY: false,
-        wheelX: 'none',
-        wheelY: 'none',
-        layout: root.verticalLayout
-      })
-    );
-
-    chart.plotContainer.setAll({
-      paddingTop: 10
-    });
-
-    const xAxis = chart.xAxes.push(
-      am5xy.CategoryAxis.new(root, {
-        categoryField: 'day',
-        renderer: am5xy.AxisRendererX.new(root, {
-          minGridDistance: 30
-        })
-      })
-    );
-    xAxis.data.setAll(dailyData);
-
-    const yAxis = chart.yAxes.push(
-      am5xy.ValueAxis.new(root, {
-        renderer: am5xy.AxisRendererY.new(root, {})
-      })
-    );
-    xAxis.get('renderer').labels.template.setAll({
-      fill: am5.color(0x6b7280),
-      fontSize: 11
-    });
-    yAxis.get('renderer').labels.template.setAll({
-      fill: am5.color(0x6b7280),
-      fontSize: 11
-    });
-    xAxis.get('renderer').grid.template.setAll({
-      strokeOpacity: 0.08
-    });
-    yAxis.get('renderer').grid.template.setAll({
-      strokeOpacity: 0.08
-    });
-
-    const expenseSeries = chart.series.push(
-      am5xy.LineSeries.new(root, {
-        name: 'Expenses',
-        xAxis,
-        yAxis,
-        valueYField: 'expense',
-        categoryXField: 'day',
-        stroke: am5.color(0xff7a87),
-        tooltip: am5.Tooltip.new(root, {
-          labelText: 'Day {categoryX}: ₹{valueY.formatNumber("#,###")}'
-        })
-      })
-    );
-    expenseSeries.data.setAll(dailyData);
-    expenseSeries.strokes.template.setAll({ strokeWidth: 3 });
-    expenseSeries.fills.template.setAll({
-      fill: am5.color(0xff7a87),
-      fillOpacity: 0.1,
-      visible: true
-    });
-    expenseSeries.bullets.push(() =>
-      am5.Bullet.new(root, {
-        sprite: am5.Circle.new(root, {
-          radius: 4,
-          fill: am5.color(0xff7a87),
-          stroke: am5.color(0xffffff),
-          strokeWidth: 2
-        })
-      })
-    );
-
-    const incomeSeries = chart.series.push(
-      am5xy.LineSeries.new(root, {
-        name: 'Income',
-        xAxis,
-        yAxis,
-        valueYField: 'income',
-        categoryXField: 'day',
-        stroke: am5.color(0x2fc98f),
-        tooltip: am5.Tooltip.new(root, {
-          labelText: 'Day {categoryX}: ₹{valueY.formatNumber("#,###")}'
-        })
-      })
-    );
-    incomeSeries.data.setAll(dailyData);
-    incomeSeries.strokes.template.setAll({ strokeWidth: 3 });
-    incomeSeries.fills.template.setAll({
-      fill: am5.color(0x2fc98f),
-      fillOpacity: 0.1,
-      visible: true
-    });
-    incomeSeries.bullets.push(() =>
-      am5.Bullet.new(root, {
-        sprite: am5.Circle.new(root, {
-          radius: 4,
-          fill: am5.color(0x2fc98f),
-          stroke: am5.color(0xffffff),
-          strokeWidth: 2
-        })
-      })
-    );
-
-    chart.set(
-      'cursor',
-      am5xy.XYCursor.new(root, {
-        behavior: 'none'
-      })
-    );
-
-    const legend = chart.children.push(
-      am5.Legend.new(root, {
-        centerX: am5.percent(50),
-        x: am5.percent(50),
-        marginTop: 8
-      })
-    );
-    legend.labels.template.setAll({
-      fill: am5.color(0x374151),
-      fontSize: 12
-    });
-    legend.markers.template.setAll({
-      width: 10,
-      height: 10
-    });
-    legend.data.setAll(chart.series.values);
-
-    expenseSeries.appear(800);
-    incomeSeries.appear(800);
-    chart.appear(800, 100);
-
-    return () => {
-      if (lineRootRef.current) {
-        lineRootRef.current.dispose();
-        lineRootRef.current = null;
-      }
-    };
-  }, [analytics, amChartsReady]);
-
-  useEffect(() => {
-    return () => {
-      if (lineRootRef.current) {
-        lineRootRef.current.dispose();
-        lineRootRef.current = null;
-      }
-    };
-  }, []);
+    return null;
+  };
 
   if (loading) {
     return (
@@ -645,14 +350,31 @@ function Analytics() {
             <h3>Category Distribution</h3>
             <span className="badge">Spending Breakdown</span>
           </div>
-          <div className="chart-container">
-            {chartsLoadError ? (
-              <div className="empty-chart">
-                <div className="empty-icon">⚠️</div>
-                <p>{chartsLoadError}</p>
-              </div>
-            ) : categoryBreakdown && categoryBreakdown.length > 0 ? (
-              <div ref={pieChartRef} className="amchart-root" />
+          <div className="chart-container" style={{ height: '380px', position: 'relative' }}>
+            {categoryBreakdown && categoryBreakdown.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryBreakdown.map(c => ({ name: c.category, value: parseFloat(c.amount) }))}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={85}
+                    outerRadius={115}
+                    paddingAngle={3}
+                    dataKey="value"
+                    stroke="none"
+                    cornerRadius={6}
+                    animationBegin={0}
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  >
+                    {categoryBreakdown.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getCategoryColor(entry.category)} style={{ outline: 'none' }} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip content={<CustomPieTooltip />} cursor={{ fill: 'transparent' }} />
+                </PieChart>
+              </ResponsiveContainer>
             ) : (
               <div className="empty-chart">
                 <div className="empty-icon">📊</div>
@@ -662,20 +384,67 @@ function Analytics() {
           </div>
         </div>
 
-        {/* Line Chart - Daily Spending */}
+        {/* Area Chart - Daily Spending */}
         <div className="analytics-card chart-card">
           <div className="card-header">
             <h3>Daily Spending Pattern</h3>
             <span className="badge">Day-by-Day</span>
           </div>
-          <div className="chart-container">
-            {chartsLoadError ? (
-              <div className="empty-chart">
-                <div className="empty-icon">⚠️</div>
-                <p>{chartsLoadError}</p>
-              </div>
-            ) : analytics.dailySpending && analytics.dailySpending.length > 0 ? (
-              <div ref={lineChartRef} className="amchart-root" />
+          <div className="chart-container" style={{ height: '380px', position: 'relative' }}>
+            {analytics.dailySpending && analytics.dailySpending.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={analytics.dailySpending}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ff7a87" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#ff7a87" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2fc98f" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#2fc98f" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5EA" />
+                  <XAxis 
+                    dataKey="day" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#8E8E93', fontSize: 12, fontWeight: 500 }} 
+                    tickMargin={10} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#8E8E93', fontSize: 12, fontWeight: 500 }} 
+                    tickMargin={10}
+                    tickFormatter={(val) => `₹${val >= 1000 ? (val / 1000) + 'k' : val}`}
+                  />
+                  <RechartsTooltip content={<CustomAreaTooltip />} cursor={{ stroke: '#C7C7CC', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                  <Area
+                    type="monotone"
+                    dataKey="expense"
+                    stroke="#ff7a87"
+                    strokeWidth={3}
+                    fill="url(#colorExpense)"
+                    activeDot={{ r: 6, fill: '#ff7a87', stroke: '#fff', strokeWidth: 2, boxShadow: '0 0 10px rgba(255,122,135,0.4)' }}
+                    animationDuration={1200}
+                    animationEasing="ease-in-out"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="income"
+                    stroke="#2fc98f"
+                    strokeWidth={3}
+                    fill="url(#colorIncome)"
+                    activeDot={{ r: 6, fill: '#2fc98f', stroke: '#fff', strokeWidth: 2, boxShadow: '0 0 10px rgba(47,201,143,0.4)' }}
+                    animationDuration={1200}
+                    animationEasing="ease-in-out"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             ) : (
               <div className="empty-chart">
                 <div className="empty-icon">📈</div>

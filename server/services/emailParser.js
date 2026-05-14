@@ -270,7 +270,8 @@ class EmailParser {
 
         // Salary/Income
         if (desc.includes('salary') || desc.includes('credited') ||
-            desc.includes('income') || desc.includes('payment received')) {
+            desc.includes('income') || desc.includes('payment received') ||
+            desc.includes('tata consultancy services')) {
             return 'Salary';
         }
 

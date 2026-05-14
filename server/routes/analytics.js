@@ -14,16 +14,17 @@ router.get('/stats', async (req, res) => {
         const start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), 1);
         const end = endDate ? new Date(endDate) : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-        // Get total income and expenses for the period
+        // Get total income and expenses for the period (excluding Rent and Food from total_expenses calculation)
         const totalsQuery = `
             SELECT 
-                SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) as total_income,
-                SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) as total_expenses,
-                COUNT(CASE WHEN type = 'CREDIT' THEN 1 END) as income_count,
-                COUNT(CASE WHEN type = 'DEBIT' THEN 1 END) as expense_count
-            FROM transactions
-            WHERE user_id = $1 
-            AND transaction_date BETWEEN $2 AND $3
+                SUM(CASE WHEN t.type = 'CREDIT' THEN t.amount ELSE 0 END) as total_income,
+                SUM(CASE WHEN t.type = 'DEBIT' AND COALESCE(c.name, '') NOT IN ('Rent', 'Food & Dining') THEN t.amount ELSE 0 END) as total_expenses,
+                COUNT(CASE WHEN t.type = 'CREDIT' THEN 1 END) as income_count,
+                COUNT(CASE WHEN t.type = 'DEBIT' THEN 1 END) as expense_count
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.user_id = $1 
+            AND t.transaction_date BETWEEN $2 AND $3
         `;
 
         const totalsResult = await pool.query(totalsQuery, [userId, start, end]);
@@ -33,13 +34,15 @@ router.get('/stats', async (req, res) => {
         const totalExpenses = parseFloat(totals.total_expenses || 0);
         const savings = totalIncome - totalExpenses;
 
-        // Calculate average daily spending based on actual days with transactions
+        // Calculate average daily spending based on actual days with transactions (excluding Rent and Food)
         const uniqueDaysQuery = `
-            SELECT COUNT(DISTINCT DATE(transaction_date)) as transaction_days
-            FROM transactions
-            WHERE user_id = $1 
-            AND type = 'DEBIT'
-            AND transaction_date BETWEEN $2 AND $3
+            SELECT COUNT(DISTINCT DATE(t.transaction_date)) as transaction_days
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.user_id = $1 
+            AND t.type = 'DEBIT'
+            AND COALESCE(c.name, '') NOT IN ('Rent', 'Food & Dining')
+            AND t.transaction_date BETWEEN $2 AND $3
         `;
 
         const uniqueDaysResult = await pool.query(uniqueDaysQuery, [userId, start, end]);
@@ -77,16 +80,17 @@ router.get('/stats', async (req, res) => {
         // Get most spent category
         const mostSpentCategory = categoryBreakdown.length > 0 ? categoryBreakdown[0] : null;
 
-        // Get daily spending pattern for the entire month
+        // Get daily spending pattern for the entire month (excluding Rent and Food from daily_expenses)
         const dailyQuery = `
             SELECT 
-                DATE(transaction_date) as date,
-                SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) as daily_expenses,
-                SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) as daily_income
-            FROM transactions
-            WHERE user_id = $1 
-            AND transaction_date BETWEEN $2 AND $3
-            GROUP BY DATE(transaction_date)
+                DATE(t.transaction_date) as date,
+                SUM(CASE WHEN t.type = 'DEBIT' AND COALESCE(c.name, '') NOT IN ('Rent', 'Food & Dining') THEN t.amount ELSE 0 END) as daily_expenses,
+                SUM(CASE WHEN t.type = 'CREDIT' THEN t.amount ELSE 0 END) as daily_income
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.user_id = $1 
+            AND t.transaction_date BETWEEN $2 AND $3
+            GROUP BY DATE(t.transaction_date)
             ORDER BY date ASC
         `;
 
