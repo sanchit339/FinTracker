@@ -53,6 +53,14 @@ function Login({ onLogin }) {
 
     return (
         <div className="login-page">
+            <div className="personal-use-toast">
+                <span className="toast-icon">ℹ️</span>
+                <div className="toast-content">
+                    <strong>Personal Use Only</strong>
+                    <p>This app is built specifically for my needs. You don't need to sign up here—just fork the repo, customize it for yourself, and host your own instance!</p>
+                </div>
+            </div>
+
             <div className="login-container">
                 <div className="login-card">
                     <div className="login-header">

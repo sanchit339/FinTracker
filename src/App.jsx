@@ -8,6 +8,13 @@ import Insights from './components/Insights';
 import Settings from './components/Settings';
 import Sidebar from './components/Sidebar';
 
+const ProtectedRoute = ({ isAuthenticated, children }) => {
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+    return children;
+};
+
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -63,26 +70,40 @@ function App() {
         );
     }
 
-    if (!isAuthenticated) {
-        return <Login onLogin={handleLogin} />;
-    }
-
     return (
         <Router>
-            <div className="App app-shell flex" style={{ minHeight: '100vh' }}>
-                <Sidebar onLogout={handleLogout} />
+            <Routes>
+                <Route 
+                    path="/login" 
+                    element={
+                        isAuthenticated 
+                            ? <Navigate to="/" replace /> 
+                            : <Login onLogin={handleLogin} />
+                    } 
+                />
+                
+                <Route
+                    path="/*"
+                    element={
+                        <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <div className="App app-shell flex" style={{ minHeight: '100vh' }}>
+                                <Sidebar onLogout={handleLogout} />
 
-                <main className="app-main" style={{ flex: 1, overflow: 'auto' }}>
-                    <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/transactions" element={<Transactions />} />
-                        <Route path="/analytics" element={<Analytics />} />
-                        {insightsEnabled && <Route path="/insights" element={<Insights />} />}
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="*" element={<Navigate to="/" />} />
-                    </Routes>
-                </main>
-            </div>
+                                <main className="app-main" style={{ flex: 1, overflow: 'auto' }}>
+                                    <Routes>
+                                        <Route path="/" element={<Dashboard />} />
+                                        <Route path="/transactions" element={<Transactions />} />
+                                        <Route path="/analytics" element={<Analytics />} />
+                                        {insightsEnabled && <Route path="/insights" element={<Insights />} />}
+                                        <Route path="/settings" element={<Settings />} />
+                                        <Route path="*" element={<Navigate to="/" replace />} />
+                                    </Routes>
+                                </main>
+                            </div>
+                        </ProtectedRoute>
+                    }
+                />
+            </Routes>
         </Router>
     );
 }
