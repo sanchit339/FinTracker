@@ -27,17 +27,6 @@
   }
 
   /* Hide sidebar on tablets, show hamburger menu */
-  .sidebar {
-    position: fixed;
-    left: -280px;
-    transition: left 0.3s ease;
-    z-index: 1000;
-  }
-
-  .sidebar.mobile-open {
-    left: 0;
-  }
-
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
