@@ -165,7 +165,12 @@ function Analytics() {
     );
   }
 
-  const { summary, categoryBreakdown, topCategories, mostSpentCategory } = analytics;
+  const { summary, topCategories, mostSpentCategory } = analytics;
+  
+  // Filter out Rent and Food & Dining from the UI category breakdown list and Pie chart
+  const categoryBreakdown = (analytics.categoryBreakdown || []).filter(
+    cat => cat.category !== 'Rent' && cat.category !== 'Food & Dining'
+  );
 
   return (
     <div className="analytics-page">
