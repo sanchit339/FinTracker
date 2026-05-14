@@ -167,9 +167,13 @@ function Analytics() {
 
   const { summary, topCategories, mostSpentCategory } = analytics;
   
-  // Filter out Rent and Food & Dining from the UI category breakdown list and Pie chart
-  const categoryBreakdown = (analytics.categoryBreakdown || []).filter(
+  // Separate out the variable vs fixed/essential spending
+  const variableBreakdown = (analytics.categoryBreakdown || []).filter(
     cat => cat.category !== 'Rent' && cat.category !== 'Food & Dining'
+  );
+  
+  const fixedBreakdown = (analytics.categoryBreakdown || []).filter(
+    cat => cat.category === 'Rent' || cat.category === 'Food & Dining'
   );
 
   return (
@@ -245,20 +249,20 @@ function Analytics() {
       </div>
 
       <div className="analytics-grid">
-        {/* Category Breakdown */}
+        {/* Category Breakdown (Variable) */}
         <div className="analytics-card category-breakdown">
           <div className="card-header">
-            <h3>Category Breakdown</h3>
-            <span className="badge">Top {Math.min(categoryBreakdown.length, 8)}</span>
+            <h3>Variable Expenses</h3>
+            <span className="badge">Top {Math.min(variableBreakdown.length, 8)}</span>
           </div>
 
-          {categoryBreakdown.length === 0 ? (
+          {variableBreakdown.length === 0 ? (
             <div className="empty-message">
-              <p>No expense data for this month</p>
+              <p>No variable expense data for this month</p>
             </div>
           ) : (
             <div className="category-list">
-              {categoryBreakdown.slice(0, 8).map((cat, idx) => (
+              {variableBreakdown.slice(0, 8).map((cat, idx) => (
                 <div key={idx} className="category-item">
                   <div className="category-info">
                     <span className="category-emoji">{getCategoryEmoji(cat.category)}</span>
@@ -280,6 +284,41 @@ function Analytics() {
                   />
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Fixed / Essential Breakdown */}
+          {fixedBreakdown.length > 0 && (
+            <div className="fixed-expenses-section" style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border-color)' }}>
+              <div className="card-header" style={{ marginBottom: '16px', borderBottom: 'none', paddingBottom: '0' }}>
+                <h3>Fixed & Essential</h3>
+                <span className="badge">Excl. from Daily Avg</span>
+              </div>
+              <div className="category-list">
+                {fixedBreakdown.map((cat, idx) => (
+                  <div key={idx} className="category-item">
+                    <div className="category-info">
+                      <span className="category-emoji">{getCategoryEmoji(cat.category)}</span>
+                      <div className="category-details">
+                        <span className="category-name">{cat.category}</span>
+                        <span className="category-count">{cat.count} transactions</span>
+                      </div>
+                    </div>
+                    <div className="category-stats">
+                      <span className="category-amount">{formatCurrency(cat.amount)}</span>
+                      <span className="category-percentage">Fixed</span>
+                    </div>
+                    <div
+                      className="category-bar"
+                      style={{
+                        width: '100%',
+                        backgroundColor: getCategoryColor(cat.category),
+                        opacity: 0.6
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -356,11 +395,11 @@ function Analytics() {
             <span className="badge">Spending Breakdown</span>
           </div>
           <div className="chart-container" style={{ height: '380px', position: 'relative' }}>
-            {categoryBreakdown && categoryBreakdown.length > 0 ? (
+            {variableBreakdown && variableBreakdown.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categoryBreakdown.map(c => ({ name: c.category, value: parseFloat(c.amount) }))}
+                    data={variableBreakdown.map(c => ({ name: c.category, value: parseFloat(c.amount) }))}
                     cx="50%"
                     cy="50%"
                     innerRadius={85}
@@ -373,7 +412,7 @@ function Analytics() {
                     animationDuration={800}
                     animationEasing="ease-out"
                   >
-                    {categoryBreakdown.map((entry, index) => (
+                    {variableBreakdown.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getCategoryColor(entry.category)} style={{ outline: 'none' }} />
                     ))}
                   </Pie>
