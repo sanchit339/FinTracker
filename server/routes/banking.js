@@ -17,95 +17,91 @@ router.get('/transactions/recent', async (req, res) => {
             startDate,
             endDate,
             type,  // DEBIT or CREDIT
-            search // Search term
+            search, // Search term
+            categoryId // Explicit category filter
         } = req.query;
 
-        let query = `
-            SELECT t.*, 
-                   c.name as category_name, 
-                   a.bank_name,
-                   a.account_number_masked
-            FROM transactions t
-            LEFT JOIN categories c ON t.category_id = c.id
-            LEFT JOIN accounts a ON t.account_id = a.id
-            WHERE t.user_id = $1
-        `;
-
+        let whereClause = `WHERE t.user_id = $1`;
         const params = [userId];
         let paramCount = 1;
 
         // Add date filters if provided
         if (startDate) {
             paramCount++;
-            query += ` AND t.transaction_date >= $${paramCount}`;
+            whereClause += ` AND t.transaction_date >= $${paramCount}`;
             params.push(startDate);
         }
 
         if (endDate) {
             paramCount++;
-            query += ` AND t.transaction_date <= $${paramCount}`;
+            whereClause += ` AND t.transaction_date <= $${paramCount}`;
             params.push(endDate);
         }
 
         // Add type filter if provided
         if (type && (type === 'DEBIT' || type === 'CREDIT')) {
             paramCount++;
-            query += ` AND t.type = $${paramCount}`;
+            whereClause += ` AND t.type = $${paramCount}`;
             params.push(type);
         }
 
         // Add search filter if provided
         if (search) {
             paramCount++;
-            query += ` AND (t.description ILIKE $${paramCount} OR c.name ILIKE $${paramCount} OR a.bank_name ILIKE $${paramCount})`;
+            whereClause += ` AND (t.description ILIKE $${paramCount} OR c.name ILIKE $${paramCount} OR a.bank_name ILIKE $${paramCount})`;
             params.push(`%${search}%`);
         }
 
-        // Get total count for pagination
-        let countQuery = `
-            SELECT COUNT(*) as count
+        // Add explicit category filter
+        if (categoryId && categoryId !== 'null') {
+            paramCount++;
+            whereClause += ` AND t.category_id = $${paramCount}`;
+            params.push(categoryId);
+        }
+
+        const baseJoins = `
             FROM transactions t
             LEFT JOIN categories c ON t.category_id = c.id
             LEFT JOIN accounts a ON t.account_id = a.id
-            WHERE t.user_id = $1
         `;
 
-        let countParamCount = 1;
-        const countParams = [userId];
+        // 1. Data Query (with pagination)
+        const query = `
+            SELECT t.*, 
+                   c.name as category_name, 
+                   a.bank_name,
+                   a.account_number_masked
+            ${baseJoins}
+            ${whereClause}
+            ORDER BY t.transaction_date DESC, t.created_at DESC
+            LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+        `;
+        const queryParams = [...params, parseInt(limit), parseInt(offset)];
+        const resultPromise = pool.query(query, queryParams);
 
-        if (startDate) {
-            countParamCount++;
-            countQuery += ` AND t.transaction_date >= $${countParamCount}`;
-            countParams.push(startDate);
-        }
+        // 2. Count Query
+        const countQuery = `
+            SELECT COUNT(*) as count
+            ${baseJoins}
+            ${whereClause}
+        `;
+        const countPromise = pool.query(countQuery, params);
 
-        if (endDate) {
-            countParamCount++;
-            countQuery += ` AND t.transaction_date <= $${countParamCount}`;
-            countParams.push(endDate);
-        }
+        // 3. Aggregate Query
+        const aggregateQuery = `
+            SELECT 
+                COALESCE(SUM(CASE WHEN t.type = 'CREDIT' THEN t.amount ELSE 0 END), 0) as total_income,
+                COALESCE(SUM(CASE WHEN t.type = 'DEBIT' THEN t.amount ELSE 0 END), 0) as total_expenses
+            ${baseJoins}
+            ${whereClause}
+        `;
+        const aggregatePromise = pool.query(aggregateQuery, params);
 
-        if (type && (type === 'DEBIT' || type === 'CREDIT')) {
-            countParamCount++;
-            countQuery += ` AND t.type = $${countParamCount}`;
-            countParams.push(type);
-        }
+        // Execute queries concurrently
+        const [result, countResult, aggregateResult] = await Promise.all([resultPromise, countPromise, aggregatePromise]);
 
-        if (search) {
-            countParamCount++;
-            countQuery += ` AND (t.description ILIKE $${countParamCount} OR c.name ILIKE $${countParamCount} OR a.bank_name ILIKE $${countParamCount})`;
-            countParams.push(`%${search}%`);
-        }
-
-        const countResult = await pool.query(countQuery, countParams);
         const totalCount = parseInt(countResult.rows[0]?.count || 0);
-
-        // Add sorting, limit and offset
-        query += ` ORDER BY t.transaction_date DESC, t.created_at DESC`;
-        query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
-        params.push(parseInt(limit), parseInt(offset));
-
-        const result = await pool.query(query, params);
+        const aggregates = aggregateResult.rows[0];
 
         res.json({
             transactions: result.rows,
@@ -114,6 +110,10 @@ router.get('/transactions/recent', async (req, res) => {
                 limit: parseInt(limit),
                 offset: parseInt(offset),
                 hasMore: (parseInt(offset) + parseInt(limit)) < totalCount
+            },
+            aggregates: {
+                totalIncome: parseFloat(aggregates.total_income),
+                totalExpenses: parseFloat(aggregates.total_expenses)
             }
         });
     } catch (error) {

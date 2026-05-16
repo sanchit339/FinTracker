@@ -13,8 +13,14 @@ function Transactions() {
     hasMore: false
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [monthlyStats, setMonthlyStats] = useState({
+    income: 0,
+    expense: 0
+  });
+  const [filteredStats, setFilteredStats] = useState({
     income: 0,
     expense: 0
   });
@@ -68,24 +74,24 @@ function Transactions() {
   };
 
   useEffect(() => {
-    // Reset offset when search term changes so we start from page 1
-    if (filters.offset !== 0 && searchTerm) {
+    // Reset offset when search term or filters change so we start from page 1
+    if (filters.offset !== 0 && (searchTerm || startDate || endDate || selectedCategory !== 'ALL')) {
       setFilters(prev => ({ ...prev, offset: 0 }));
     } else {
       fetchTransactions();
     }
-  }, [filters, dateFilter, searchTerm]);
+  }, [filters, startDate, endDate, searchTerm, selectedCategory]);
 
-  // Separate effect for monthly stats - only when date filter changes
+  // Separate effect for monthly stats - only when date range changes
   useEffect(() => {
-    if (dateFilter) {
+    if (startDate || endDate) {
       // Only fetch when date filter is applied
       fetchMonthlyStats();
-    } else if (filters.offset === 0 && !dateFilter) {
+    } else if (filters.offset === 0 && !startDate && !endDate) {
       // Or on initial load without date filter
       fetchMonthlyStats();
     }
-  }, [dateFilter]);
+  }, [startDate, endDate]);
 
   const fetchMonthlyStats = async () => {
     try {
@@ -120,18 +126,27 @@ function Transactions() {
         params.append('type', filters.type);
       }
 
+      // Add search filter
       if (searchTerm) {
         params.append('search', searchTerm);
       }
 
-      // Add date filter to backend query
-      if (dateFilter) {
-        const filterDate = new Date(dateFilter);
-        const startOfDay = new Date(filterDate.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(filterDate.setHours(23, 59, 59, 999));
+      // Add category filter
+      if (selectedCategory !== 'ALL') {
+        params.append('categoryId', selectedCategory);
+      }
 
-        params.append('startDate', startOfDay.toISOString());
-        params.append('endDate', endOfDay.toISOString());
+      // Add date range filters to backend query
+      if (startDate) {
+        const d = new Date(startDate);
+        d.setHours(0, 0, 0, 0);
+        params.append('startDate', d.toISOString());
+      }
+      
+      if (endDate) {
+        const d = new Date(endDate);
+        d.setHours(23, 59, 59, 999);
+        params.append('endDate', d.toISOString());
       }
 
       const response = await fetch(`/api/banking/transactions/recent?${params}`, {
@@ -142,6 +157,12 @@ function Transactions() {
         const data = await response.json();
         setTransactions(data.transactions || []);
         setPagination(data.pagination || { total: 0, hasMore: false });
+        if (data.aggregates) {
+          setFilteredStats({
+            income: data.aggregates.totalIncome || 0,
+            expense: data.aggregates.totalExpenses || 0
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -159,8 +180,9 @@ function Transactions() {
     setFilters(prev => ({ ...prev, offset: prev.offset + prev.limit }));
   };
 
-  const handleDateChange = (newDate) => {
-    setDateFilter(newDate);
+  const handleDateChange = (type, newDate) => {
+    if (type === 'start') setStartDate(newDate);
+    else setEndDate(newDate);
     setFilters({ ...filters, offset: 0 }); // Reset pagination
   };
 
@@ -242,19 +264,9 @@ function Transactions() {
     return colors[category] || '#6B7280';
   };
 
-  // Calculate totals from currently displayed transactions (which are already filtered by backend)
-  const displayedTotals = {
-    income: transactions
-      .filter(t => t.type === 'CREDIT')
-      .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
-    expense: transactions
-      .filter(t => t.type === 'DEBIT')
-      .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0)
-  };
-
   // Determine which totals to show and labels
-  const isFiltered = !!searchTerm || !!dateFilter || filters.type !== 'ALL';
-  const displayTotals = isFiltered ? displayedTotals : monthlyStats;
+  const isFiltered = !!searchTerm || !!startDate || !!endDate || selectedCategory !== 'ALL' || filters.type !== 'ALL';
+  const displayTotals = isFiltered ? filteredStats : monthlyStats;
 
   return (
     <div className="transactions-page">
@@ -317,34 +329,57 @@ function Transactions() {
           )}
         </div>
 
-        <div className="date-filter-box">
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            onBlur={(e) => {
-              if (e.target.value !== dateFilter) {
-                handleDateChange(e.target.value);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleDateChange(e.target.value);
-                e.target.blur();
-              }
-            }}
-            className="date-input"
-            placeholder="Filter by date"
-          />
-          {dateFilter && (
-            <button
-              className="date-clear"
-              onClick={() => handleDateChange('')}
-              title="Clear date filter"
-            >
-              ✕
-            </button>
-          )}
+        <div className="category-filter-box">
+          <select 
+            value={selectedCategory} 
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="category-select-filter"
+          >
+            <option value="ALL">All Categories</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="date-range-filters">
+          <div className="date-filter-box">
+            <span className="date-label">From:</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => handleDateChange('start', e.target.value)}
+              className="date-input"
+            />
+            {startDate && (
+              <button
+                className="date-clear"
+                onClick={() => handleDateChange('start', '')}
+                title="Clear start date"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <div className="date-filter-box">
+            <span className="date-label">To:</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => handleDateChange('end', e.target.value)}
+              className="date-input"
+            />
+            {endDate && (
+              <button
+                className="date-clear"
+                onClick={() => handleDateChange('end', '')}
+                title="Clear end date"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -354,11 +389,13 @@ function Transactions() {
           <div className="summary-icon">📈</div>
           <div className="summary-content">
             <p className="summary-label">
-              {dateFilter
-                ? `Income on ${new Date(dateFilter).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
-                : searchTerm || filters.type !== 'ALL'
-                  ? 'Filtered Income'
-                  : 'Total Income (This Month)'
+              {startDate && endDate && startDate === endDate
+                ? `Income on ${new Date(startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
+                : startDate || endDate
+                  ? `Income ${startDate ? `from ${new Date(startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : ''} ${endDate ? `to ${new Date(endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : ''}`
+                  : searchTerm || selectedCategory !== 'ALL' || filters.type !== 'ALL'
+                    ? 'Filtered Income'
+                    : 'Total Income (This Month)'
               }
             </p>
             <h3 className="summary-value">{formatCurrency(displayTotals.income)}</h3>
@@ -372,11 +409,13 @@ function Transactions() {
           <div className="summary-icon">📉</div>
           <div className="summary-content">
             <p className="summary-label">
-              {dateFilter
-                ? `Expenses on ${new Date(dateFilter).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
-                : searchTerm || filters.type !== 'ALL'
-                  ? 'Filtered Expenses'
-                  : 'Total Expenses (This Month)'
+              {startDate && endDate && startDate === endDate
+                ? `Expenses on ${new Date(startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
+                : startDate || endDate
+                  ? `Expenses ${startDate ? `from ${new Date(startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : ''} ${endDate ? `to ${new Date(endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : ''}`
+                  : searchTerm || selectedCategory !== 'ALL' || filters.type !== 'ALL'
+                    ? 'Filtered Expenses'
+                    : 'Total Expenses (This Month)'
               }
             </p>
             <h3 className="summary-value">{formatCurrency(displayTotals.expense)}</h3>
@@ -400,7 +439,7 @@ function Transactions() {
             <div className="empty-icon">📭</div>
             <h3>No transactions found</h3>
             <p className="text-secondary">
-              {searchTerm || dateFilter
+              {searchTerm || startDate || endDate || selectedCategory !== 'ALL'
                 ? 'Try adjusting your filters or search terms'
                 : 'Sync your Gmail to import transactions'
               }
@@ -632,9 +671,48 @@ function Transactions() {
           color: var(--text-primary);
         }
 
+        .category-filter-box {
+          flex: 0 0 auto;
+          min-width: 180px;
+        }
+
+        .category-select-filter {
+          width: 100%;
+          padding: var(--spacing-sm) var(--spacing-md);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+          font-size: var(--font-size-md);
+          background: white;
+          cursor: pointer;
+          transition: border-color 0.2s;
+        }
+
+        .category-select-filter:focus {
+          outline: none;
+          border-color: var(--primary-color);
+        }
+
+        .date-range-filters {
+          display: flex;
+          gap: var(--spacing-md);
+          flex-wrap: wrap;
+        }
+
+        .date-label {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          position: absolute;
+          top: -0.5rem;
+          left: 0.75rem;
+          background: white;
+          padding: 0 0.25rem;
+          z-index: 1;
+        }
+
         .date-filter-box {
           flex: 0 0 auto;
-          width: 200px;
+          width: 170px;
           position: relative;
           display: flex;
           align-items: center;
@@ -642,7 +720,7 @@ function Transactions() {
 
         .date-input {
           width: 100%;
-          padding: var(--spacing-sm) 2.5rem var(--spacing-sm) var(--spacing-sm);
+          padding: var(--spacing-sm) var(--spacing-md);
           border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
           font-size: var(--font-size-md);

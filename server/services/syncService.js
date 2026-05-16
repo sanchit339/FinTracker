@@ -126,7 +126,7 @@ class SyncService {
                 }
 
                 // Get category ID
-                const categoryId = await this.getCategoryId(transaction.description, userId);
+                const categoryId = await this.getCategoryId(transaction.description, transaction.amount, userId);
 
                 // Check if transaction already exists for this user
                 const exists = await this.transactionExists(userId, emailData.id);
@@ -183,8 +183,8 @@ class SyncService {
     /**
      * Get category ID for a transaction
      */
-    async getCategoryId(description, userId) {
-        const categoryName = emailParser.categorizeTransaction(description);
+    async getCategoryId(description, amount, userId) {
+        const categoryName = emailParser.categorizeTransaction(description, amount);
         const categoryResult = await pool.query(
             'SELECT id FROM categories WHERE name = $1 AND (user_id IS NULL OR user_id = $2) LIMIT 1',
             [categoryName, userId]

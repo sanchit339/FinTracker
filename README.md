@@ -1,4 +1,5 @@
-# FinTracker
+# PortFoliio / FinTracker
+By sanchit339 (sanchitingale09@gmail.com)
 
 **Goal:** A fast, personal dashboard to automatically track finances by reading transaction emails from your bank using the Gmail API, combined with a simple portfolio frontend.
 
@@ -11,7 +12,25 @@ Individuals who want an automated, private way to track their spending and incom
 - **Insightful:** Classifies transactions into Fixed (Rent, Food) and Variable expenses to give you a clear iOS-style visual analytics breakdown of your spending habits.
 - **Secure:** Uses your own Gmail API credentials.
 
-**How to use it?**
+---
+
+## 🚀 Features & Personalization
+
+This codebase has been specifically tuned with highly personalized logic for Indian use cases and micro-transactions:
+
+- **Smart Transit Detection:** Advanced logic to catch local Indian transit. For example, any specific **₹13** transaction is automatically and strictly categorized as **Transportation** (perfect for daily BEST bus or metro tickets), overriding obscure UPI vendor names.
+- **Advanced Filtering Engine:** Filter your transaction history not just by type or keyword, but with precise **From & To Date ranges** and **Explicit Categories**.
+- **Dynamic Aggregates:** Powered by concurrent PostgreSQL queries (`Promise.all`), the backend calculates and returns accurate income and expense totals for your *exact* filtered dataset, ensuring the frontend summaries are always accurate regardless of pagination.
+- **Hybrid Insights Engine:** Automatically generates transaction clusters and spending patterns for intelligent financial tracking.
+
+---
+
+### Tech Stack
+- **Frontend:** React, Vite, Recharts (for iOS-like beautiful charts), React Router
+- **Backend:** Node.js, Express, PostgreSQL
+- **Infrastructure:** Docker & Docker Compose
+
+## 🛠️ How to use it?
 
 1. **Set up Gmail API:** Obtain credentials and add them to your `.env` file (see `docs/GMAIL_SETUP.md`).
 2. **Start the app:** Run `docker-compose up --build`.
@@ -20,12 +39,9 @@ Individuals who want an automated, private way to track their spending and incom
    - Backend API: `http://localhost:3000`
 4. **Login:** Access the Banking Dashboard and authenticate your Gmail to start syncing transactions.
 
----
+### Docker Commands
 
-### Tech Stack
-- **Frontend:** React, Vite, Recharts (for iOS-like beautiful charts), React Router
-- **Backend:** Node.js, Express, PostgreSQL
-- **Infrastructure:** Docker & Docker Compose
+```bash
 # Start all services
 docker-compose up
 
@@ -45,15 +61,12 @@ docker-compose up --build
 docker exec -it portfoliio-db psql -U portfoliio_user -d portfoliio_db
 ```
 
-## 🎨 Features Breakdown
+## 🎨 Architecture Breakdown
 
 ### Frontend Components
 - **Landing**: Hero section with stats and animations
-- **About**: Skills showcase with progress bars
-- **Projects**: Project cards with tags
-- **Contact**: Contact form and social links
-- **Login**: Authentication with registration
 - **Dashboard**: Banking dashboard with account management
+- **Transactions**: Advanced ledger view with date-range filters, category dropdowns, and dynamic aggregate cards.
 - **BankCard**: Individual bank account card with balance/transactions
 
 ### Backend APIs
@@ -64,9 +77,10 @@ docker exec -it portfoliio-db psql -U portfoliio_user -d portfoliio_db
 - `GET /api/auth/verify` - Verify token
 
 #### Banking (Protected)
-- `GET /api/banking/transactions/recent` - Get recent transactions
+- `GET /api/banking/transactions/recent` - Get recent transactions (Supports `startDate`, `endDate`, `categoryId`)
+- `GET /api/banking/categories` - Fetch system and user categories
+- `PUT /api/banking/transactions/:id/category` - Inline edit transaction category
 - `GET /api/banking/accounts` - List linked accounts
-- `POST /api/banking/accounts/link` - Link bank account
 
 #### Gmail Integration
 - `GET /api/gmail/connect` - Initiate Gmail OAuth
@@ -77,29 +91,26 @@ docker exec -it portfoliio-db psql -U portfoliio_user -d portfoliio_db
 
 - ✅ JWT-based authentication
 - ✅ Bcrypt password hashing
+- ✅ Parameterized SQL queries (preventing SQL injection)
 - ✅ HTTPS enforcement (production)
 - ✅ Rate limiting
 - ✅ Helmet security headers
 - ✅ CORS protection
-- ✅ No credential storage (AA framework)
-- ✅ Environment variable protection
 
 ## 📧 Gmail API Setup
 
 For proper transaction tracking, you need to set up Gmail API access:
 
-1. **See Complete Guide**: docs/GMAIL_SETUP.md
+1. **See Complete Guide**: `docs/GMAIL_SETUP.md`
 2. **Quick Setup**:
    - Create Google Cloud Project
    - Enable Gmail API
    - Configure OAuth consent screen
    - Create OAuth 2.0 credentials
-   - Add credentials to .env file
-
-3. **Connect Gmail**:
+   - Add credentials to `.env` file
 
 ## 🤝 Contributing
-This is a personal project, but suggestions are welcome!
+This is a personal project by **sanchit339**, but suggestions are welcome!
 
 ## 📄 License
 MIT License - feel free to use this for your own projects!

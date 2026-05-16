@@ -183,10 +183,15 @@ class EmailParser {
     }
 
     // Categorize transaction based on description
-    categorizeTransaction(description) {
+    categorizeTransaction(description, amount = null) {
         if (!description) return 'Uncategorized';
 
         const desc = description.toLowerCase();
+
+        // Exact amount overrides (e.g. ₹13 is almost always transportation like BEST bus)
+        if (amount === 13 || amount === 13.00 || amount === '13' || amount === '13.00') {
+            return 'Transportation';
+        }
 
         // Investment
         if (desc.includes('groww') || desc.includes('zerodha') ||
@@ -226,7 +231,10 @@ class EmailParser {
             desc.includes('bus') || desc.includes('taxi') ||
             desc.includes('chalo') || desc.includes('railway') ||
             desc.includes('train') || desc.includes('irctc') ||
-            desc.includes('indian railways')) {
+            desc.includes('indian railways') || desc.includes('best') ||
+            desc.includes('pmpml') || desc.includes('nmmt') ||
+            desc.includes('auto') || desc.includes('rickshaw') ||
+            desc.includes('ticket')) {
             return 'Transportation';
         }
 
